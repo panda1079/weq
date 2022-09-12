@@ -7,8 +7,6 @@ import (
 )
 
 func Load_route() {
-	fmt.Println(routes.routes)
-
 	http.HandleFunc("/", sayHelloWorld)
 	err := http.ListenAndServe(":9091", nil)
 	if err != nil {

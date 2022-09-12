@@ -3,7 +3,7 @@ package main
 import (
 	// "fmt"
 	// "log"
-
+	// "net/http"
 	// "strings"
 
 	core "core"
@@ -29,6 +29,7 @@ func main() {
 // }
 
 // func maina() {
+// 	core.Maina()
 // 	http.HandleFunc("/", sayHelloWorld)
 // 	err := http.ListenAndServe(":9091", nil)
 // 	if err != nil {
