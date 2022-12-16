@@ -2,18 +2,17 @@ package core
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 )
 
-func Load_route() {
-	http.HandleFunc("/", sayHelloWorld)
-	err := http.ListenAndServe(":9091", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+func LoadRoute(w http.ResponseWriter, r *http.Request) {
+	fmt.Print(r.Method)
+	fmt.Print("==========")
+	fmt.Fprintf(w, "1231231321") // 发送响应到客户端
 }
 
-func sayHelloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "1231231321") // 发送响应到客户端
+func Init() {
+
+	http.HandleFunc("/", LoadRoute)
+	http.ListenAndServe(":9091", nil)
 }
