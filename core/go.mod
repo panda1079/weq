@@ -8,4 +8,5 @@ require (
 
 replace (
     routes => ../app/routes
+    controller => ../app/controller
 )
