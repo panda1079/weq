@@ -36,9 +36,9 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 				var HttpInfo = library.HttpInfo{}
 				HttpInfo.ResponseWriter = w
 				HttpInfo.Request = r
+				methodArgs = append(methodArgs, reflect.ValueOf(HttpInfo))
 
 				//把包含http内容的结构体推给控制器
-				methodArgs = append(methodArgs, reflect.ValueOf(HttpInfo))
 				CtlBox.Call(methodArgs)
 
 				return
@@ -48,7 +48,6 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w, "{\"code\": \"1\", \"route\": \"路由不存在\"}") // 发送错误响应到客户端
 	}
-
 }
 
 func Init() {
@@ -59,5 +58,4 @@ func Init() {
 	//拉起http-web服务
 	http.HandleFunc("/", LoadRoute)
 	http.ListenAndServe(":9091", nil)
-
 }

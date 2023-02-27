@@ -4,4 +4,5 @@ use (
 	.
 	core
 	app/routes
+	app/model
 )
