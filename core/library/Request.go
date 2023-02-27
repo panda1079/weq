@@ -1,5 +1,6 @@
-package public
+package library
 
+//关于路由的公共函数
 type Request struct {
 	RequestList map[string]map[string]string
 }

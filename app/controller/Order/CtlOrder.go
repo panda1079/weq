@@ -1,16 +1,27 @@
 package controller
 
-import "fmt"
+import (
+	"core/library"
+	"fmt"
+)
 
-//type CtlOrder struct {
-//	out map[string]string
-//}
-//
-//func (r *CtlOrder) OrderList() {
-//	fmt.Print(1213212123)
-//	r.out = map[string]string{"code": "1", "route": "成功"}
-//}
+type CtlOrder struct {
+	out map[string]string
+}
 
-func aaa() {
-	fmt.Print(32132131)
+func (r *CtlOrder) OrderList(CH library.HttpInfo) {
+
+	postData := map[string]string{
+		"a": CH.R("a", "a"),
+		"b": CH.R("b", "b"),
+		"c": CH.R("c", "c"),
+		"d": CH.R("d", "d"),
+		"e": CH.R("e", "e"),
+		"f": CH.R("f", "f"),
+	}
+
+	fmt.Print(postData)
+
+	CH.OutJson(postData)
+
 }
