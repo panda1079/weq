@@ -56,5 +56,21 @@ func (r *CtlOrder) OrderList(CH library.HttpInfo) {
 
 	//------------- 以上的正常拉起 --------------//
 
-	CH.OutJson(postData) //输出到web页面
+	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+}
+
+func (r *CtlOrder) TestA(CH library.HttpInfo) {
+
+	postData := map[string]string{
+		"a": CH.R("a", "a"),
+		"b": CH.R("b", "b"),
+		"c": CH.R("c", "c"),
+		"d": CH.R("d", "d"),
+		"e": CH.R("e", "e"),
+		"f": CH.R("f", "f"),
+	}
+
+	library.SetLog(postData)
+	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+
 }

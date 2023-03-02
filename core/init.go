@@ -46,7 +46,11 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		fmt.Fprintf(w, "{\"code\": \"1\", \"route\": \"路由不存在\"}") // 发送错误响应到客户端
+		fprintf, err := fmt.Fprintf(w, "{\"code\": \"1\", \"route\": \"路由不存在\"}") // 发送错误响应到客户端
+		if err != nil {
+			library.SetLog(fprintf)
+			return
+		}
 	}
 }
 
@@ -57,5 +61,9 @@ func Init() {
 
 	//拉起http-web服务
 	http.HandleFunc("/", LoadRoute)
-	http.ListenAndServe(":9091", nil)
+	err := http.ListenAndServe(":9091", nil)
+	if err != nil {
+		library.SetLog(err)
+		return
+	}
 }

@@ -1,11 +1,15 @@
 package model
 
-import "fmt"
+import (
+	"core/library"
+)
 
 type ModOrder struct {
 }
 
-func (r *ModOrder) OrderList(Data map[string]string) map[string]string {
-	fmt.Print(Data)
-	return map[string]string{"code": "1", "msg": "子mod拉起成功"}
+func (r *ModOrder) OrderList(Data map[string]string) map[string]interface{} {
+
+	library.SetLog(Data)
+
+	return map[string]interface{}{"code": "1", "msg": "子mod拉起成功"}
 }
