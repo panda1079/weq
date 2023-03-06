@@ -7,13 +7,14 @@ import (
 func Web() map[string]map[string]string {
 	var AddRe = library.Request{} //core.Request.Post()
 
-	AddRe.Get("/order/order_list", "OrderList", "CtlOrder")
-	AddRe.Post("/test", "TestA", "CtlOrder")
+	// ====================== 下面开始写路由 ====================== //
 
-	//AddRe.Get("/order/order_list", "order_list", "controller/Order/CtlOrder")
-	//AddRe.Get("/order/order_list_api", "order_list_api", "controller/Order/CtlOrder")
-	//AddRe.Post("/order/replenish_order", "replenish_order", "controller/Order/CtlOrder")
-	//AddRe.Post("/order/del_order", "del_order", "controller/Order/CtlOrder")
+	AddRe.Get("/order/order_list", "OrderList", "CtlOrder")
+	AddRe.Post("/order/order_list", "OrderList", "CtlOrder")
+	AddRe.AddRoute([2]string{"Post", "Get"}, "/test", "TestA", "CtlOrder")
+	AddRe.AddRoute([2]string{"Post", "Get"}, "/(?P<ct>[a-z|A-Z|\\d+]+)/(?P<ac>[a-z|A-Z|\\d+]+)", "{ac}", "{ct}")
+
+	// ====================== 上面开始写路由 ====================== //
 
 	return AddRe.RequestList
 }

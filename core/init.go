@@ -1,56 +1,66 @@
 package core
 
 import (
+	"bytes"
 	"controller"
 	"core/library"
-	"fmt"
 	"net/http"
 	"reflect"
 	"routes"
-	"strings"
 )
 
-var routeList = routes.Web()
 var RegisterMessage = make(map[string]interface{})
+var routeList = routes.Web() //加载路由
 
 // LoadRoute 加载控制器函数
 func LoadRoute(w http.ResponseWriter, r *http.Request) {
+
+	//初始化http处理结构体，把http信息压入结构体内
+	var HttpInfo = library.HttpInfo{}
+	HttpInfo.ResponseWriter = w
+	HttpInfo.Request = r
+
+	//预制body内容raw访问使用
+	var buf = new(bytes.Buffer)
+	from, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		library.SetLog(from)
+		library.SetLog(err)
+		library.OutJson(w, map[string]string{"code": "0", "msg": "预制body失败"})
+		return
+	}
+	HttpInfo.Body = buf.String()
+
 	//获得访问路径并去掉get参数
-	var reUrl = strings.Split(r.URL.RequestURI(), "?")
-	var route = reUrl[0]
+	var route = HttpInfo.GetReUrl()
 
 	//获取当前url的路由设置 map[ac:order_list ct:CtlOrder method:GET route:/order/order_list]
-	var RInfo = routeList[r.Method+"__"+route]
-	//fmt.Print(r.Method + "__" + route)
+	lr := library.Request{}
+	Mount, RInfo := lr.GetRInfo(r, routeList, route)
+	HttpInfo.Mount = Mount
 
 	//判断是否存在路由
 	if RInfo != nil {
+		//循环控制器列表
 		for k1, v1 := range RegisterMessage {
+			//fmt.Print(k1, RInfo["ct"])
+			//fmt.Print("\n")
 			if k1 == RInfo["ct"] { //找到控制器
-
 				//预创建控制器对象
 				var methodArgs []reflect.Value
-				var CtlBox = reflect.ValueOf(v1).MethodByName(RInfo["ac"])
-
-				//把http信息压入结构体内
-				var HttpInfo = library.HttpInfo{}
-				HttpInfo.ResponseWriter = w
-				HttpInfo.Request = r
 				methodArgs = append(methodArgs, reflect.ValueOf(HttpInfo))
 
 				//把包含http内容的结构体推给控制器
+				var CtlBox = reflect.ValueOf(v1).MethodByName(RInfo["ac"])
 				CtlBox.Call(methodArgs)
 
+				//完事了就直接退出
 				return
 			}
 		}
 
 	} else {
-		fprintf, err := fmt.Fprintf(w, "{\"code\": \"1\", \"route\": \"路由不存在\"}") // 发送错误响应到客户端
-		if err != nil {
-			library.SetLog(fprintf)
-			return
-		}
+		library.OutJson(w, map[string]string{"code": "0", "msg": "路由不存在"})
 	}
 }
 
@@ -66,4 +76,5 @@ func Init() {
 		library.SetLog(err)
 		return
 	}
+
 }

@@ -62,15 +62,22 @@ func (r *CtlOrder) OrderList(CH library.HttpInfo) {
 func (r *CtlOrder) TestA(CH library.HttpInfo) {
 
 	postData := map[string]string{
-		"a": CH.R("a", "a"),
-		"b": CH.R("b", "b"),
-		"c": CH.R("c", "c"),
-		"d": CH.R("d", "d"),
-		"e": CH.R("e", "e"),
-		"f": CH.R("f", "f"),
+		"a":  CH.R("a", "a"),
+		"b":  CH.R("b", "b"),
+		"c":  CH.R("c", "c"),
+		"d":  CH.R("d", "d"),
+		"e":  CH.R("e", "e"),
+		"f":  CH.R("f", "f"),
+		"ct": CH.R("ct", "ctctct"),
+		"ac": CH.R("ac", "acacac"),
 	}
 
-	library.SetLog(postData)
+	//library.SetLog(postData)
 	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+	library.SetLog(CH.Mount)
+
+	//fmt.Print(CH.GetHeader("Content-Type"))
+	//fmt.Print("\n")
+	//fmt.Print(CH.GetHeader("content-type"))
 
 }
