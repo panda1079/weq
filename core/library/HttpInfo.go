@@ -19,13 +19,7 @@ type HttpInfo struct {
 
 // GetHeader 获取请求头信息
 func (CH *HttpInfo) GetHeader(key string) string {
-	var ct = CH.Request.Header["Content-Type"]
-
-	if len(ct) > 0 {
-		return ct[0]
-	}
-
-	return ""
+	return CH.Request.Header.Get(key)
 }
 
 // RH 获取请求参数不编码html  key : 变量名    defaultValue : 默认值
@@ -38,23 +32,25 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 	}
 
 	if len(res) == 0 {
-		//获取 raw参数
-		m := make(map[string]interface{})
-		Str := json.Unmarshal([]byte(CH.Body), &m)
-		if Str == nil {
-			switch m[key].(type) {
-			case string:
-				res = m[key].(string)
-				break
-			case int:
-				res = strconv.Itoa(m[key].(int))
-				break
-			case float32:
-				res = fmt.Sprintf("%g", m[key])
-				break
-			case float64:
-				res = fmt.Sprintf("%g", m[key])
-				break
+		//application/json的情形下获取raw参数
+		if strings.Contains(CH.GetHeader("Content-Type"), "application/json") {
+			m := make(map[string]interface{})
+			Str := json.Unmarshal([]byte(CH.Body), &m)
+			if Str == nil {
+				switch m[key].(type) {
+				case string:
+					res = m[key].(string)
+					break
+				case int:
+					res = strconv.Itoa(m[key].(int))
+					break
+				case float32:
+					res = fmt.Sprintf("%g", m[key])
+					break
+				case float64:
+					res = fmt.Sprintf("%g", m[key])
+					break
+				}
 			}
 		}
 	}

@@ -68,14 +68,16 @@ func (r *CtlOrder) TestA(CH library.HttpInfo) {
 		"d":  CH.R("d", "d"),
 		"e":  CH.R("e", "e"),
 		"f":  CH.R("f", "f"),
-		"ct": CH.R("ct", "ctctct"),
-		"ac": CH.R("ac", "acacac"),
+		"ct": CH.R("ct", "ctc"),
+		"ac": CH.R("ac", "aca"),
 	}
 
 	//library.SetLog(postData)
 	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
-	library.SetLog(CH.Mount)
 
+	library.SetLog(CH.GetHeader("Content-Type") == "application/json; charset=utf-8")
+	library.SetLog(CH.GetHeader("content-type"))
+	library.SetLog(CH.GetHeader("content-types"))
 	//fmt.Print(CH.GetHeader("Content-Type"))
 	//fmt.Print("\n")
 	//fmt.Print(CH.GetHeader("content-type"))

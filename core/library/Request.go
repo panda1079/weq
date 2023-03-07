@@ -76,7 +76,7 @@ func (r *Request) GetRInfo(Rr *http.Request, routeList map[string]map[string]str
 						run["ac"] = strings.Replace(run["ac"], "{"+name+"}", match[i], -1)
 						run["ct"] = strings.Replace(run["ct"], "{"+name+"}", match[i], -1)
 
-						Mount[name] = match[i] //向请求参数内添加额外参数（请勿与请求参数起冲突，否则将会替换掉请求参数）
+						Mount[name] = match[i] //向请求参数内添加额外参数（请勿与请求参数起冲突，否则将会被请求参数替换掉）
 					}
 				}
 				break
