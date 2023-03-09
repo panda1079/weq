@@ -1,7 +1,7 @@
 package model
 
 import (
-	Order "model/Order"
+	Order "model/Test"
 )
 
 type ModIndex struct {
@@ -12,10 +12,10 @@ func (r *ModIndex) Init() map[string]interface{} {
 	var RegisterMessage = make(map[string]interface{})
 
 	//----------需要在这里注册控制器包-----------------//
-	RegisterMessage["ModOrder"] = &Order.ModOrder{}
-	//RegisterMessage["ModOrder"] = &Order.CtlOrder{}
-	//RegisterMessage["ModOrder"] = &Order.CtlOrder{}
-	//RegisterMessage["ModOrder"] = &Order.CtlOrder{}
+	RegisterMessage["ModTest"] = &Order.ModTest{}
+	//RegisterMessage["ModTest"] = &Order.ModTest{}
+	//RegisterMessage["ModTest"] = &Order.ModTest{}
+	//RegisterMessage["ModTest"] = &Order.ModTest{}
 
 	return RegisterMessage
 }

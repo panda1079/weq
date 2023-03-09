@@ -24,6 +24,7 @@ func (CH *HttpInfo) GetHeader(key string) string {
 
 // RH 获取请求参数不编码html  key : 变量名    defaultValue : 默认值
 func (CH *HttpInfo) RH(key string, defaultValue string) string {
+	//获取GET参数
 	var values = CH.Request.URL.Query()
 	var res = values.Get(key)
 
@@ -55,12 +56,14 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 		}
 	}
 
+	//获取额外挂载参数
 	if len(res) == 0 {
 		if value, ok := CH.Mount[key]; ok {
 			res = value
 		}
 	}
 
+	//实在没有，就把默认值返回去吧
 	if len(res) == 0 {
 		return defaultValue
 	}
@@ -70,7 +73,7 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 
 // R 获取请求参数  key : 变量名    defaultValue : 默认值
 func (CH *HttpInfo) R(key string, defaultValue string) string {
-	var res = CH.RH(key, defaultValue)
+	var res = CH.RH(key, defaultValue) //直接获取，省事
 
 	var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串
 	arg = strings.Replace(arg, "(", "&#40;", -1)        //对小写括号进行处理

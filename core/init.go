@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"config"
 	"controller"
 	"core/library"
 	"net/http"
@@ -24,8 +25,8 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 	var buf = new(bytes.Buffer)
 	from, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		library.SetLog(from)
-		library.SetLog(err)
+		library.SetLog(from, "错误输出")
+		library.SetLog(err, "错误输出")
 		library.OutJson(w, map[string]string{"code": "0", "msg": "预制body失败"})
 		return
 	}
@@ -69,11 +70,18 @@ func Init() {
 	var ctl = controller.CtlIndex{}
 	RegisterMessage = ctl.Init()
 
-	//拉起http-web服务
+	//加载数据库模块
+	var sql = library.MysqlG{}
+	sql.InitMysql()
+
+	//获取启动配置
+	deploy := config.Deploy{}
+	con := deploy.Run()
+
 	http.HandleFunc("/", LoadRoute)
-	err := http.ListenAndServe(":9091", nil)
+	err := http.ListenAndServe(con["LISTEN_ADDRESS"]+":"+con["PORT"], nil)
 	if err != nil {
-		library.SetLog(err)
+		library.SetLog(err, "错误输出")
 		return
 	}
 

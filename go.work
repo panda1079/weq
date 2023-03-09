@@ -3,6 +3,7 @@ go 1.18
 use (
 	.
 	core
+	config
 	app/routes
 	app/model
 	app/controller

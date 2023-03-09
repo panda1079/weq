@@ -73,6 +73,7 @@ func (r *Request) GetRInfo(Rr *http.Request, routeList map[string]map[string]str
 					if i != 0 && name != "" {
 						//SetLog(name + "-----" + match[i])
 
+						//对路由配置中的变量进行替换
 						run["ac"] = strings.Replace(run["ac"], "{"+name+"}", match[i], -1)
 						run["ct"] = strings.Replace(run["ct"], "{"+name+"}", match[i], -1)
 

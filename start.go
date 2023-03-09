@@ -1,6 +1,8 @@
 package main
 
-import "core"
+import (
+	"core"
+)
 
 func main() {
 	core.Init()

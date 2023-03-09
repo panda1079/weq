@@ -2,17 +2,16 @@ package controller
 
 import (
 	"core/library"
-	"fmt"
 	"model"
-	Order "model/Order"
+	ModTest "model/Test"
 	"reflect"
 )
 
-type CtlOrder struct {
+type CtlTest struct {
 	out map[string]string
 }
 
-func (r *CtlOrder) OrderList(CH library.HttpInfo) {
+func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	postData := map[string]string{
 		"a": CH.R("a", "a"),
@@ -23,18 +22,21 @@ func (r *CtlOrder) OrderList(CH library.HttpInfo) {
 		"f": CH.R("f", "f"),
 	}
 
-	fmt.Print(postData)
-	fmt.Print("\n")
+	library.SetLog(postData, "输出打印")
 
 	//------------- 以下是抽象化调用 --------------//
 
 	//初始化MOD池
-	var Mod = model.ModIndex{}
-	var RegisterMessage = Mod.Init()
+	var (
+		Mod             = model.ModIndex{}
+		RegisterMessage = Mod.Init()
+	)
 
-	var ModName = "ModOrder"
-	var ModFunName = "OrderList"
-	var methodArgs []reflect.Value
+	var (
+		ModName    = "ModTest"
+		ModFunName = "Test"
+		methodArgs []reflect.Value
+	)
 
 	//压入数据
 	methodArgs = append(methodArgs, reflect.ValueOf(postData))
@@ -42,24 +44,22 @@ func (r *CtlOrder) OrderList(CH library.HttpInfo) {
 	//反射调用
 	var ModBox = reflect.ValueOf(RegisterMessage[ModName]).MethodByName(ModFunName)
 	var aaa = ModBox.Call(methodArgs)[0]
-	fmt.Print(aaa)
-	fmt.Print("\n")
+	library.SetLog(aaa, "反射调用输出打印")
 
 	//------------- 以上是抽象化调用 --------------//
 
 	//------------- 以下的正常拉起 --------------//
 
-	Mod2 := Order.ModOrder{}
-	var aab = Mod2.OrderList(postData) //直接调用
-	fmt.Print(aab)
-	fmt.Print("\n")
+	Mod2 := ModTest.ModTest{}
+	var aab = Mod2.Test(postData) //直接调用
+	library.SetLog(aab, "直接调用输出打印")
 
 	//------------- 以上的正常拉起 --------------//
 
-	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+	library.OutJson(CH.ResponseWriter, aab) //输出到web页面
 }
 
-func (r *CtlOrder) TestA(CH library.HttpInfo) {
+func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	postData := map[string]string{
 		"a":  CH.R("a", "a"),
@@ -72,14 +72,9 @@ func (r *CtlOrder) TestA(CH library.HttpInfo) {
 		"ac": CH.R("ac", "aca"),
 	}
 
-	//library.SetLog(postData)
+	library.SetLog(CH.GetHeader("Content-Type") == "application/json; charset=utf-8", "日常打印")
+	library.SetLog(CH.GetHeader("content-type"), "日常打印")
+	library.SetLog(CH.GetHeader("content-types"), "日常打印")
+
 	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
-
-	library.SetLog(CH.GetHeader("Content-Type") == "application/json; charset=utf-8")
-	library.SetLog(CH.GetHeader("content-type"))
-	library.SetLog(CH.GetHeader("content-types"))
-	//fmt.Print(CH.GetHeader("Content-Type"))
-	//fmt.Print("\n")
-	//fmt.Print(CH.GetHeader("content-type"))
-
 }
