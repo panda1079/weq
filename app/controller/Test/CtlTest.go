@@ -8,7 +8,7 @@ import (
 )
 
 type CtlTest struct {
-	DBs library.MysqlG
+	DB  library.MysqlG
 	out map[string]string
 }
 
@@ -30,7 +30,7 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 	//初始化MOD池
 	var (
 		Mod             = model.ModIndex{}
-		RegisterMessage = Mod.Init(r.DBs)
+		RegisterMessage = Mod.Init(r.DB)
 	)
 
 	var (
@@ -51,7 +51,7 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	//------------- 以下的正常拉起 --------------//
 
-	Mod2 := ModTest.ModTest{DBs: r.DBs}
+	Mod2 := ModTest.ModTest{DB: r.DB}
 	var aab = Mod2.Test(postData) //直接调用
 	library.SetLog(aab, "直接调用输出打印")
 
