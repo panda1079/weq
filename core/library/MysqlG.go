@@ -3,15 +3,18 @@ package library
 import (
 	"config"
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql" //导入包但不使用，init()
 	"strconv"
 )
 
 // MysqlG 关于连接的公共函数
 type MysqlG struct {
-	Connections map[string]*sql.DB
+	Connections    map[string]*sql.DB
+	connectionName string //当前连接池名称
 }
 
+// InitMysql 加载配置，装载链接
 func (r *MysqlG) InitMysql() {
 	//先把内存分配定下来，不如会出现 panic: assignment to entry in nil map
 	r.Connections = make(map[string]*sql.DB)
@@ -31,6 +34,7 @@ func (r *MysqlG) InitMysql() {
 	}
 }
 
+// Connect 初始化mysql链接
 func (r *MysqlG) Connect(mName string, con map[string]string) bool {
 	//[map[MAX_NUM:20 TIME_OUT:3 charset:utf8mb4 database:test host:127.0.0.1 password:123456 port:3306 timeout:5 user:root]]
 	//用户名:密码啊@tcp(ip:端口)/数据库的名字
@@ -63,4 +67,39 @@ func (r *MysqlG) Connect(mName string, con map[string]string) bool {
 	r.Connections[mName] = db
 
 	return true
+}
+
+// Connection 连接名设置
+func (r *MysqlG) Connection(name string) *MysqlG {
+	r.connectionName = name
+	return r
+}
+
+func (r *MysqlG) GetAll(sql string) (rows []map[string]string) {
+	list, _ := r.Connections[r.connectionName].Query(sql) //把数据查出来
+	fields, _ := list.Columns()                           //返回列名
+
+	//逐行读取并插入
+	for list.Next() {
+		scans := make([]interface{}, len(fields))
+		row := make(map[string]string)
+
+		for i := range scans {
+			scans[i] = &scans[i]
+		}
+
+		list.Scan(scans...)
+
+		for i, v := range scans {
+			var value string
+			if v != nil {
+				value = fmt.Sprintf("%s", v)
+			}
+			row[fields[i]] = value
+		}
+
+		rows = append(rows, row)
+	}
+
+	return rows
 }

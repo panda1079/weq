@@ -6,7 +6,7 @@ type Mysql struct {
 func (r *Mysql) Run() map[string]map[string]string {
 	return map[string]map[string]string{
 		//数据库的主库配置
-		"MYSQL_WRITE": map[string]string{
+		"write": map[string]string{
 			"host":     "192.168.2.3",
 			"port":     "3306",
 			"user":     "test",
@@ -18,7 +18,7 @@ func (r *Mysql) Run() map[string]map[string]string {
 			"TIME_OUT": "3",
 		},
 		//数据库的从库配置
-		"MYSQL_READ": map[string]string{
+		"read": map[string]string{
 			"host":     "192.168.2.3",
 			"port":     "3306",
 			"user":     "test",
