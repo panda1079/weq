@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql" //导入包但不使用，init()
 	"strconv"
+	"strings"
 )
 
 // MysqlG 关于连接的公共函数
@@ -34,7 +35,7 @@ func (r *MysqlG) InitMysql() {
 	}
 }
 
-// Connect 初始化mysql链接
+// Connect 绑定解析，并返回对象
 func (r *MysqlG) Connect(mName string, con map[string]string) bool {
 	//[map[MAX_NUM:20 TIME_OUT:3 charset:utf8mb4 database:test host:127.0.0.1 password:123456 port:3306 timeout:5 user:root]]
 	//用户名:密码啊@tcp(ip:端口)/数据库的名字
@@ -75,9 +76,10 @@ func (r *MysqlG) Connection(name string) *MysqlG {
 	return r
 }
 
-func (r *MysqlG) GetAll(sql string) (rows []map[string]string) {
-	list, _ := r.Connections[r.connectionName].Query(sql) //把数据查出来
-	fields, _ := list.Columns()                           //返回列名
+// GetAll 获取多条的数据
+func (r *MysqlG) GetAll(sqlStr string) (rows []map[string]string) {
+	list, _ := r.Connections[r.connectionName].Query(sqlStr) //把数据查出来
+	fields, _ := list.Columns()                              //返回列名
 
 	//逐行读取并插入
 	for list.Next() {
@@ -102,4 +104,22 @@ func (r *MysqlG) GetAll(sql string) (rows []map[string]string) {
 	}
 
 	return rows
+}
+
+// GetOne 获取单条的数据
+func (r *MysqlG) GetOne(SqlStr string) map[string]string {
+	// 去除连续空格
+	SqlStr = strings.TrimSpace(SqlStr)
+	SqlSUb := strings.ToUpper(SqlStr[len(SqlStr)-7 : len(SqlStr)])
+	if SqlSUb != "LIMIT 1" {
+		SqlStr += " LIMIT 1 "
+	}
+
+	//查询数据
+	res := r.GetAll(SqlStr)
+	if len(res) > 0 {
+		return res[0]
+	}
+
+	return map[string]string{}
 }

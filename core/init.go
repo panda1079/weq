@@ -66,10 +66,13 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func Init() {
-
 	//加载数据库模块
 	var DB = library.MysqlG{}
 	DB.InitMysql()
+
+	//// 查询数据
+	//var aaa = DB.Connection("write").GetOne("SELECT * FROM h_game_client")
+	//fmt.Print(aaa)
 
 	//初始化控制器池
 	var ctl = controller.CtlIndex{}
@@ -85,5 +88,4 @@ func Init() {
 		library.SetLog(err, "错误输出")
 		return
 	}
-
 }
