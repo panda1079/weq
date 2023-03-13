@@ -13,15 +13,10 @@ import (
 
 // SetLog 输出日志内容
 func SetLog(a any, info string) {
-	now := time.Now()                  //获取当前时间
-	timestamp := now.Unix()            //时间戳
-	timeObj := time.Unix(timestamp, 0) //将时间戳转为时间格式
-
-	fmt.Print("[")                       //起~
-	fmt.Print(timeObj)                   //输出时间
-	fmt.Print("][" + info + "][info]：[") //输出头描述
-	fmt.Print(a)                         //输出内容
-	fmt.Print("]\n")                     //完毕，换行
+	time := string(int64(time.Now().Unix()))
+	fmt.Print("[" + time + "][" + info + "][info]：[") //输出头描述
+	fmt.Print(a)                                      //输出内容
+	fmt.Print("]\n")                                  //完毕，换行
 }
 
 // OutJson json输出
