@@ -259,7 +259,7 @@ func (r *MysqlG) Delete(Where string, tableName string) int64 {
 		return 0
 	}
 
-	SqlStr := "DELETE FROM " + r.GraveAccent(tableName) + "WHERE " + Where
+	SqlStr := "DELETE FROM " + r.GraveAccent(tableName) + " WHERE " + Where
 
 	SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
