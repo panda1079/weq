@@ -3,7 +3,6 @@ package controller
 import (
 	"core/library"
 	"model"
-	ModTest "model/Test"
 	"reflect"
 )
 
@@ -51,13 +50,13 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	//------------- 以下的正常拉起 --------------//
 
-	Mod2 := ModTest.ModTest{DB: r.DB}
-	var aab = Mod2.Test(postData) //直接调用
-	library.SetLog(aab, "直接调用输出打印")
+	//Mod2 := ModTest.ModTest{DB: r.DB}
+	//var aab = Mod2.Test(postData) //直接调用
+	//library.SetLog(aab, "直接调用输出打印")
 
 	//------------- 以上的正常拉起 --------------//
 
-	library.OutJson(CH.ResponseWriter, aab) //输出到web页面
+	//library.OutJson(CH.ResponseWriter, aab) //输出到web页面
 }
 
 func (r *CtlTest) TestA(CH library.HttpInfo) {
@@ -73,9 +72,7 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 		"ac": CH.R("ac", "aca"),
 	}
 
-	library.SetLog(CH.GetHeader("Content-Type") == "application/json; charset=utf-8", "日常打印")
-	library.SetLog(CH.GetHeader("content-type"), "日常打印")
-	library.SetLog(CH.GetHeader("content-types"), "日常打印")
+	//library.OutJson(CH.ResponseWriter, postData) //输出到web页面
 
-	library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+	library.OutHtml(CH.ResponseWriter, "test.html", postData)
 }

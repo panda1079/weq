@@ -70,10 +70,6 @@ func Init() {
 	var DB = library.MysqlG{}
 	DB.InitMysql()
 
-	//// 查询数据
-	//var aaa = DB.Connection("write").GetOne("SELECT * FROM h_game_client")
-	//fmt.Print(aaa)
-
 	//初始化控制器池
 	var ctl = controller.CtlIndex{}
 	RegisterMessage = ctl.Init(DB)
