@@ -168,7 +168,7 @@ func (r *MysqlG) UpDate(keyValues map[string]string, Where string, tableName str
 		}
 	}
 
-	SetLog(SqlStr, "打印sql") //正式上限需要去掉
+	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
 	isOk, result := r.Execute(SqlStr)
 	if !isOk {
@@ -201,7 +201,7 @@ func (r *MysqlG) Insert(keyValues map[string]string, tableName string) int64 {
 
 	SqlStr := "INSERT INTO " + r.GraveAccent(tableName) + " (" + keySql + ") VALUES (" + valueSql + ")"
 
-	SetLog(SqlStr, "打印sql") //正式上限需要去掉
+	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
 	isOk, result := r.Execute(SqlStr)
 	if !isOk {
@@ -240,7 +240,7 @@ func (r *MysqlG) MultiInsert(keyValues []map[string]string, tableName string) in
 
 	SqlStr := "INSERT INTO " + r.GraveAccent(tableName) + " (" + strings.Join(keyS, ",") + ") VALUES " + strings.Join(valueStr, ",")
 
-	SetLog(SqlStr, "打印sql") //正式上限需要去掉
+	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
 	isOk, result := r.Execute(SqlStr)
 	if !isOk {
@@ -261,7 +261,7 @@ func (r *MysqlG) Delete(Where string, tableName string) int64 {
 
 	SqlStr := "DELETE FROM " + r.GraveAccent(tableName) + " WHERE " + Where
 
-	SetLog(SqlStr, "打印sql") //正式上限需要去掉
+	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
 	isOk, result := r.Execute(SqlStr)
 	if !isOk {
