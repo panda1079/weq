@@ -1,6 +1,9 @@
 # TEST_GO
 ## 基于golang 1.18
-
+```
+//运行
+go run start.go
+```
 ### 一个简单的类PHP的golang结构
 
 1.Go语言官方没有实现Mysql的数据库驱动，
