@@ -7,6 +7,8 @@ import (
 func Web() map[string]map[string]string {
 	var AddRe = library.Request{} //core.Request.Post()
 
+	AddRe.AddRoute([2]string{"Post", "Get"}, "/", "TestA", "CtlTest") //如需使用空路由的请使用这个，个人不建议使用空路由
+
 	// ====================== 下面开始写路由 ====================== //
 
 	AddRe.Get("/test/test", "Test", "CtlTest")

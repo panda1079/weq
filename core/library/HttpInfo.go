@@ -2,10 +2,8 @@ package library
 
 import (
 	"encoding/json"
-	"fmt"
 	"html"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -38,20 +36,7 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 			m := make(map[string]interface{})
 			Str := json.Unmarshal([]byte(CH.Body), &m)
 			if Str == nil {
-				switch m[key].(type) {
-				case string:
-					res = m[key].(string)
-					break
-				case int:
-					res = strconv.Itoa(m[key].(int))
-					break
-				case float32:
-					res = fmt.Sprintf("%g", m[key])
-					break
-				case float64:
-					res = fmt.Sprintf("%g", m[key])
-					break
-				}
+				res = InterfaceToString(m[key]) //转类型
 			}
 		}
 	}
@@ -72,7 +57,7 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 }
 
 // R 获取请求参数  key : 变量名    defaultValue : 默认值
-func (CH *HttpInfo) R(key string, defaultValue string) string {
+func (CH *HttpInfo) R(key string, defaultValue string) interface{} {
 	var res = CH.RH(key, defaultValue) //直接获取，省事
 
 	var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串

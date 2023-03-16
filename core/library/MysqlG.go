@@ -29,7 +29,7 @@ func (r *MysqlG) InitMysql() {
 		//SetLog(v1, "输出配置详情")
 		b := r.Connect(k1, v1)
 		if !b {
-			SetLog("加载配置"+k1+"失败", "加载配置失败")
+			SetLog("加载Mysql配置"+k1+"失败", "加载配置失败")
 			return
 		}
 	}
@@ -44,23 +44,23 @@ func (r *MysqlG) Connect(mName string, con map[string]string) bool {
 	//连接数据集
 	db, err := sql.Open("mysql", dsn) //open不会检验用户名和密码
 	if err != nil {
-		SetLog(err, "数据库错误")
+		SetLog(err, "Mysql错误")
 		return false
 	}
 
 	err = db.Ping() //尝试连接数据库
 	if err != nil {
-		SetLog(err, "连接数据库错误")
+		SetLog(err, "连接Mysql错误")
 		return false
 	}
 
-	SetLog(err, "连接数据库"+con["database"]+"成功~")
+	SetLog(err, "连接Mysql-"+con["database"]+"成功~")
 
 	//设置数据库连接池的最大连接数
 	MaxNum, _ := strconv.Atoi(con["MAX_NUM"])
 	db.SetMaxIdleConns(MaxNum)
 
-	r.Connections[mName] = new(sql.DB)
+	//r.Connections[mName] = new(sql.DB)
 	r.Connections[mName] = db
 
 	return true
@@ -78,7 +78,7 @@ func (r *MysqlG) Execute(SqlStr string) (bool, sql.Result) {
 	isOk := true
 	if err != nil {
 		isOk = false
-		SetLog(err, "操作数据错误")
+		SetLog(err, "Mysql操作数据错误")
 	}
 	return isOk, result
 }
@@ -162,7 +162,8 @@ func (r *MysqlG) UpDate(keyValues map[string]string, Where string, tableName str
 	// 默认只更新一条
 	if updateOne {
 		SqlStr = strings.TrimSpace(SqlStr)
-		SqlSUb := strings.ToUpper(SqlStr[len(SqlStr)-7 : len(SqlStr)])
+		SqlLen := len(SqlStr)
+		SqlSUb := strings.ToUpper(SqlStr[SqlLen-7 : SqlLen])
 		if SqlSUb != "LIMIT 1" {
 			SqlStr += " LIMIT 1 "
 		}
@@ -199,7 +200,7 @@ func (r *MysqlG) Insert(keyValues map[string]string, tableName string) int64 {
 	keySql = keySql[0 : len(keySql)-1]
 	valueSql = valueSql[0 : len(valueSql)-1]
 
-	SqlStr := "INSERT INTO " + r.GraveAccent(tableName) + " (" + keySql + ") VALUES (" + valueSql + ")"
+	SqlStr := "INSERT INTO" + " " + r.GraveAccent(tableName) + " (" + keySql + ") VALUES (" + valueSql + ")"
 
 	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
@@ -238,7 +239,7 @@ func (r *MysqlG) MultiInsert(keyValues []map[string]string, tableName string) in
 		valueStr = append(valueStr, "('"+strings.Join(v1list, "','")+"')") //这里需要数组转字符串
 	}
 
-	SqlStr := "INSERT INTO " + r.GraveAccent(tableName) + " (" + strings.Join(keyS, ",") + ") VALUES " + strings.Join(valueStr, ",")
+	SqlStr := "INSERT INTO" + " " + r.GraveAccent(tableName) + " (" + strings.Join(keyS, ",") + ") VALUES " + strings.Join(valueStr, ",")
 
 	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
@@ -259,7 +260,7 @@ func (r *MysqlG) Delete(Where string, tableName string) int64 {
 		return 0
 	}
 
-	SqlStr := "DELETE FROM " + r.GraveAccent(tableName) + " WHERE " + Where
+	SqlStr := "DELETE FROM" + " " + r.GraveAccent(tableName) + " WHERE " + Where
 
 	//SetLog(SqlStr, "打印sql") //正式上限需要去掉
 
