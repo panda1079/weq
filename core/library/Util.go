@@ -137,7 +137,8 @@ func MakeRequest(url string, params map[string]interface{}, extend map[string]st
 	resp, err := client.Do(req)
 
 	var res = map[string]interface{}{
-		"code": resp.StatusCode,
+		"Code":   resp.StatusCode,
+		"Header": resp.Header,
 	}
 
 	defer resp.Body.Close()
