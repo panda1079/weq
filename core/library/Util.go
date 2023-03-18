@@ -1,6 +1,7 @@
 package library
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -97,6 +98,55 @@ func InterfaceToString(inter interface{}) string {
 		res = fmt.Sprintf("%g", inter)
 		break
 	}
+	return res
+}
+
+// makeRequest 发起http请求
+//url    访问路径
+//params 参数，该数组多于1个，表示为POST
+//extend 请求伪造包头参数
+//返回的为一个请求状态，一个内容
+func makeRequest(url string, params map[string]interface{}, extend map[string]string) map[string]interface{} {
+	if url == "" {
+		return map[string]interface{}{"code": "100"}
+	}
+
+	//参数数组多于1个，表示为POST
+	met := "GET"
+	if len(params) > 1 {
+		met = "POST"
+	}
+
+	paramStr, _ := json.Marshal(params) //转换格式
+
+	client := &http.Client{}
+	req, err := http.NewRequest(met, url, bytes.NewReader(paramStr))
+	if err != nil {
+		SetLog(err, "发起http请求错误1")
+	}
+
+	//写入包头
+	req.Header.Set("Accept-Language", "zh-cn")
+	req.Header.Set("Connection", "Keep-Alive")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	for k1, v1 := range extend {
+		req.Header.Set(k1, v1)
+	}
+
+	resp, err := client.Do(req)
+
+	var res = map[string]interface{}{
+		"code": resp.StatusCode,
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		SetLog(err, "发起http请求错误2")
+	}
+
+	res["result"] = string(body)
 
 	return res
 }

@@ -3,7 +3,7 @@
 
 ### 运行命令
 ```
-go run start.go
+go run main.go
 ```
 
 ### 测试URL

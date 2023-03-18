@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// RedisG 关于连接的公共函数
+// RedisG 关于连接的公共函数，（由于个人比较懒，就实现了最基本的key增删查）
 type RedisG struct {
 	Connections    map[string]*redis.Client
 	connectionName string //当前连接池名称
