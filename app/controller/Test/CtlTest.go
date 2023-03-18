@@ -75,5 +75,9 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	//library.OutJson(CH.ResponseWriter, postData) //输出到web页面
 
+	params := make(map[string]interface{})
+	extend := make(map[string]string)
+
+	library.SetLog(library.MakeRequest("https://api.baidu.com", params, extend), "请求内容")
 	library.OutHtml(CH.ResponseWriter, "test.html", postData)
 }

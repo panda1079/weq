@@ -101,12 +101,12 @@ func InterfaceToString(inter interface{}) string {
 	return res
 }
 
-// makeRequest 发起http请求
+// MakeRequest 发起http请求
 //url    访问路径
 //params 参数，该数组多于1个，表示为POST
 //extend 请求伪造包头参数
 //返回的为一个请求状态，一个内容
-func makeRequest(url string, params map[string]interface{}, extend map[string]string) map[string]interface{} {
+func MakeRequest(url string, params map[string]interface{}, extend map[string]string) map[string]interface{} {
 	if url == "" {
 		return map[string]interface{}{"code": "100"}
 	}
