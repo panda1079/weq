@@ -80,4 +80,9 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	library.SetLog(library.MakeRequest("https://api.baidu.com", params, extend), "请求内容")
 	library.OutHtml(CH.ResponseWriter, "test.html", postData)
+
+	library.SetLog(CH.ClientRealIP(), "当前IP")
+
+	library.SetLog(library.RandStr(10), "随机字符串")
+
 }

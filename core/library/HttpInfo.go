@@ -3,6 +3,7 @@ package library
 import (
 	"encoding/json"
 	"html"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -71,4 +72,28 @@ func (CH *HttpInfo) R(key string, defaultValue string) interface{} {
 func (CH *HttpInfo) GetReUrl() string {
 	var reUrl = strings.Split(CH.Request.URL.RequestURI(), "?")
 	return reUrl[0]
+}
+
+// ClientRealIP 获取用户的真实IP
+func (CH *HttpInfo) ClientRealIP() string {
+	ip := "127.0.0.1" //弄个初始值
+
+	ipSub, _, _ := net.SplitHostPort(CH.Request.RemoteAddr)
+	if net.ParseIP(ipSub) != nil {
+		ip = ipSub
+	}
+
+	if In(ip[0:3], []string{"127", "172", "192"}) {
+		xri := CH.GetHeader("X-Real-IP")
+		xff := CH.GetHeader("X-Forward-For")
+
+		if net.ParseIP(xri) != nil {
+			ip = xri
+		}
+
+		if net.ParseIP(xff) != nil {
+			ip = xff
+		}
+	}
+	return ip
 }

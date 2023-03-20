@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -101,6 +102,16 @@ func InterfaceToString(inter interface{}) string {
 	return res
 }
 
+// In 判断字符串是否在数组种
+func In(target string, strArray []string) bool {
+	for _, element := range strArray {
+		if target == element {
+			return true
+		}
+	}
+	return false
+}
+
 // MakeRequest 发起http请求
 //url    访问路径
 //params 参数，该数组多于1个，表示为POST
@@ -135,7 +146,6 @@ func MakeRequest(url string, params map[string]interface{}, extend map[string]st
 	}
 
 	resp, err := client.Do(req)
-
 	var res = map[string]interface{}{
 		"Code":   resp.StatusCode,
 		"Header": resp.Header,
@@ -148,6 +158,15 @@ func MakeRequest(url string, params map[string]interface{}, extend map[string]st
 	}
 
 	res["result"] = string(body)
-
 	return res
+}
+
+// RandStr 产生随机字符串
+func RandStr(length int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
