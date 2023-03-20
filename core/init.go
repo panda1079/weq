@@ -66,13 +66,14 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func Init() {
-	//加载数据库模块
-	var DB = library.MysqlG{}
-	DB.InitMysql()
+
+	//加载预设服务模块
+	var SS = library.ServerS{}
+	SS.InitServerS()
 
 	//初始化控制器池
 	var ctl = controller.CtlIndex{}
-	RegisterMessage = ctl.Init(DB)
+	RegisterMessage = ctl.Init(SS)
 
 	//获取启动配置
 	deploy := config.Deploy{}

@@ -9,14 +9,14 @@ import (
 type CtlIndex struct {
 }
 
-func (r *CtlIndex) Init(DB library.MysqlG) map[string]interface{} {
+func (r *CtlIndex) Init(SS library.ServerS) map[string]interface{} {
 	var RegisterMessage = make(map[string]interface{})
 
 	//----------需要在这里注册控制器包-----------------//
-	RegisterMessage["CtlTest"] = &Order.CtlTest{DB: DB}
-	//RegisterMessage["CtlTest"] = &Order.CtlTest{}
-	//RegisterMessage["CtlTest"] = &Order.CtlTest{}
-	//RegisterMessage["CtlTest"] = &Order.CtlTest{}
+	RegisterMessage["CtlTest"] = &Order.CtlTest{SS: SS}
+	//RegisterMessage["CtlTest"] = &Order.CtlTest{SS: SS}
+	//RegisterMessage["CtlTest"] = &Order.CtlTest{SS: SS}
+	//RegisterMessage["CtlTest"] = &Order.CtlTest{SS: SS}
 
 	return RegisterMessage
 }

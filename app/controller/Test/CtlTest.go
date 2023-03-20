@@ -3,17 +3,18 @@ package controller
 import (
 	"core/library"
 	"model"
+	ModTest "model/Test"
 	"reflect"
 )
 
 type CtlTest struct {
-	DB  library.MysqlG
+	SS  library.ServerS
 	out map[string]string
 }
 
 func (r *CtlTest) Test(CH library.HttpInfo) {
 
-	postData := map[string]string{
+	postData := map[string]interface{}{
 		"a": CH.R("a", "a"),
 		"b": CH.R("b", "b"),
 		"c": CH.R("c", "c"),
@@ -29,7 +30,7 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 	//初始化MOD池
 	var (
 		Mod             = model.ModIndex{}
-		RegisterMessage = Mod.Init(r.DB)
+		RegisterMessage = Mod.Init(r.SS)
 	)
 
 	var (
@@ -50,9 +51,9 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	//------------- 以下的正常拉起 --------------//
 
-	//Mod2 := ModTest.ModTest{DB: r.DB}
-	//var aab = Mod2.Test(postData) //直接调用
-	//library.SetLog(aab, "直接调用输出打印")
+	Mod2 := ModTest.ModTest{SS: r.SS}
+	var aab = Mod2.Test2(postData) //直接调用
+	library.SetLog(aab, "直接调用输出打印")
 
 	//------------- 以上的正常拉起 --------------//
 
@@ -61,7 +62,7 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 
 func (r *CtlTest) TestA(CH library.HttpInfo) {
 
-	postData := map[string]string{
+	postData := map[string]interface{}{
 		"a":  CH.R("a", "a"),
 		"b":  CH.R("b", "b"),
 		"c":  CH.R("c", "c"),
@@ -74,5 +75,14 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	//library.OutJson(CH.ResponseWriter, postData) //输出到web页面
 
+	params := make(map[string]interface{})
+	extend := make(map[string]string)
+
+	library.SetLog(library.MakeRequest("https://api.baidu.com", params, extend), "请求内容")
 	library.OutHtml(CH.ResponseWriter, "test.html", postData)
+
+	library.SetLog(CH.ClientRealIP(), "当前IP")
+
+	library.SetLog(library.RandStr(10), "随机字符串")
+
 }

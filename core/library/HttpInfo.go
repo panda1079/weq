@@ -2,10 +2,9 @@ package library
 
 import (
 	"encoding/json"
-	"fmt"
 	"html"
+	"net"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -38,20 +37,7 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 			m := make(map[string]interface{})
 			Str := json.Unmarshal([]byte(CH.Body), &m)
 			if Str == nil {
-				switch m[key].(type) {
-				case string:
-					res = m[key].(string)
-					break
-				case int:
-					res = strconv.Itoa(m[key].(int))
-					break
-				case float32:
-					res = fmt.Sprintf("%g", m[key])
-					break
-				case float64:
-					res = fmt.Sprintf("%g", m[key])
-					break
-				}
+				res = InterfaceToString(m[key]) //转类型
 			}
 		}
 	}
@@ -72,7 +58,7 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 }
 
 // R 获取请求参数  key : 变量名    defaultValue : 默认值
-func (CH *HttpInfo) R(key string, defaultValue string) string {
+func (CH *HttpInfo) R(key string, defaultValue string) interface{} {
 	var res = CH.RH(key, defaultValue) //直接获取，省事
 
 	var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串
@@ -86,4 +72,28 @@ func (CH *HttpInfo) R(key string, defaultValue string) string {
 func (CH *HttpInfo) GetReUrl() string {
 	var reUrl = strings.Split(CH.Request.URL.RequestURI(), "?")
 	return reUrl[0]
+}
+
+// ClientRealIP 获取用户的真实IP
+func (CH *HttpInfo) ClientRealIP() string {
+	ip := "127.0.0.1" //弄个初始值
+
+	ipSub, _, _ := net.SplitHostPort(CH.Request.RemoteAddr)
+	if net.ParseIP(ipSub) != nil {
+		ip = ipSub
+	}
+
+	if In(ip[0:3], []string{"127", "172", "192"}) {
+		xri := CH.GetHeader("X-Real-IP")
+		xff := CH.GetHeader("X-Forward-For")
+
+		if net.ParseIP(xri) != nil {
+			ip = xri
+		}
+
+		if net.ParseIP(xff) != nil {
+			ip = xff
+		}
+	}
+	return ip
 }
