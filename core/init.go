@@ -15,11 +15,18 @@ var routeList = routes.Web() //加载路由
 
 // LoadRoute 加载控制器函数
 func LoadRoute(w http.ResponseWriter, r *http.Request) {
+	// 设置所有用户都能访问
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	//解析请求中的数据
+	r.ParseMultipartForm(1024)
 
 	//初始化http处理结构体，把http信息压入结构体内
 	var HttpInfo = library.HttpInfo{}
 	HttpInfo.ResponseWriter = w
 	HttpInfo.Request = r
+	HttpInfo.Form = r.Form
+	HttpInfo.MultipartForm = r.MultipartForm
 
 	//预制body内容raw访问使用
 	var buf = new(bytes.Buffer)
@@ -27,7 +34,7 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		library.SetLog(from, "错误输出")
 		library.SetLog(err, "错误输出")
-		library.OutJson(w, map[string]string{"code": "0", "msg": "预制body失败"})
+		library.OutJson(HttpInfo, map[string]interface{}{"code": "0", "msg": "预制body失败"})
 		return
 	}
 	HttpInfo.Body = buf.String()
@@ -61,7 +68,7 @@ func LoadRoute(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		library.OutJson(w, map[string]string{"code": "0", "msg": "路由不存在"})
+		library.OutJson(HttpInfo, map[string]interface{}{"code": "0", "msg": "路由不存在"})
 	}
 }
 

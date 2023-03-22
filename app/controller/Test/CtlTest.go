@@ -15,12 +15,12 @@ type CtlTest struct {
 func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	postData := map[string]interface{}{
-		"a": CH.R("a", "a"),
-		"b": CH.R("b", "b"),
-		"c": CH.R("c", "c"),
-		"d": CH.R("d", "d"),
-		"e": CH.R("e", "e"),
-		"f": CH.R("f", "f"),
+		"a": CH.R("a", 222, "int"),
+		"b": CH.R("b", "b", "string"),
+		"c": CH.R("c", 444, "int"),
+		"d": CH.R("d", "d", "string"),
+		"e": CH.R("e", "e", "string"),
+		"f": CH.R("f", "f", "string"),
 	}
 
 	library.SetLog(postData, "输出打印")
@@ -57,32 +57,34 @@ func (r *CtlTest) Test(CH library.HttpInfo) {
 
 	//------------- 以上的正常拉起 --------------//
 
-	//library.OutJson(CH.ResponseWriter, aab) //输出到web页面
+	library.OutJson(CH, aab) //输出到web页面
 }
 
 func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	postData := map[string]interface{}{
-		"a":  CH.R("a", "a"),
-		"b":  CH.R("b", "b"),
-		"c":  CH.R("c", "c"),
-		"d":  CH.R("d", "d"),
-		"e":  CH.R("e", "e"),
-		"f":  CH.R("f", "f"),
-		"ct": CH.R("ct", "ctc"),
-		"ac": CH.R("ac", "aca"),
+		"a":  CH.R("a", 1, "int"),
+		"b":  CH.R("b", "b", "string"),
+		"c":  CH.R("c", 222, "int"),
+		"d":  CH.R("d", "d", "string"),
+		"e":  CH.R("e", "e", "string"),
+		"f":  CH.R("f", "f", "string"),
+		"ct": CH.R("ct", "ctc", "string"),
+		"ac": CH.R("ac", "aca", "string"),
 	}
 
-	//library.OutJson(CH.ResponseWriter, postData) //输出到web页面
+	library.SetLog(postData, "postData") //输出到日志
+
+	//library.OutJson(CH, postData) //输出到web页面
 
 	params := make(map[string]interface{})
 	extend := make(map[string]string)
 
 	library.SetLog(library.MakeRequest("https://api.baidu.com", params, extend), "请求内容")
-	library.OutHtml(CH.ResponseWriter, "test.html", postData)
+	library.OutHtml(CH, "test.html", postData) //输出html（允许轻微替换内容）
 
 	library.SetLog(CH.ClientRealIP(), "当前IP")
 
-	library.SetLog(library.RandStr(10), "随机字符串")
+	library.SetLog(library.RandStr(10, true), "随机字符串")
 
 }

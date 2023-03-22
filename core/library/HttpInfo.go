@@ -3,8 +3,11 @@ package library
 import (
 	"encoding/json"
 	"html"
+	"mime/multipart"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +17,8 @@ type HttpInfo struct {
 	ResponseWriter http.ResponseWriter
 	Body           string
 	Mount          map[string]string
+	Form           url.Values
+	MultipartForm  *multipart.Form
 }
 
 // GetHeader 获取请求头信息
@@ -22,13 +27,17 @@ func (CH *HttpInfo) GetHeader(key string) string {
 }
 
 // RH 获取请求参数不编码html  key : 变量名    defaultValue : 默认值
-func (CH *HttpInfo) RH(key string, defaultValue string) string {
+func (CH *HttpInfo) RH(key string, defaultValue any) interface{} {
 	//获取GET参数
 	var values = CH.Request.URL.Query()
 	var res = values.Get(key)
 
 	if len(res) == 0 {
 		res = CH.Request.PostFormValue(key) //获取post数据
+	}
+
+	if len(res) == 0 {
+		res = CH.Request.FormValue(key) //获取From数据
 	}
 
 	if len(res) == 0 {
@@ -57,15 +66,25 @@ func (CH *HttpInfo) RH(key string, defaultValue string) string {
 	return res
 }
 
-// R 获取请求参数  key : 变量名    defaultValue : 默认值
-func (CH *HttpInfo) R(key string, defaultValue string) interface{} {
-	var res = CH.RH(key, defaultValue) //直接获取，省事
+// R 获取请求参数  key : 变量名    defaultValue : 默认值    Type:类型（string/int）
+func (CH *HttpInfo) R(key string, defaultValue any, Type string) interface{} {
+	var res = InterfaceToString(CH.RH(key, defaultValue)) //直接获取，省事
 
-	var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串
-	arg = strings.Replace(arg, "(", "&#40;", -1)        //对小写括号进行处理
-	arg = strings.Replace(arg, ")", "&#41;", -1)        //对小写括号进行处理
-	arg = strings.Replace(arg, "=", "&#61;", -1)        //对等于括号进行处理
-	return arg
+	if Type == "string" {
+		var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串
+		arg = strings.Replace(arg, "(", "&#40;", -1)        //对小写括号进行处理
+		arg = strings.Replace(arg, ")", "&#41;", -1)        //对小写括号进行处理
+		arg = strings.Replace(arg, "=", "&#61;", -1)        //对等于括号进行处理
+		return arg
+	} else if Type == "int" {
+		ins, _ := strconv.Atoi(res)
+		return ins
+	} else if Type == "int64" {
+		ins64, _ := strconv.ParseInt(res, 10, 64)
+		return ins64
+	}
+
+	return defaultValue
 }
 
 // GetReUrl 获得访问路径并去掉get参数

@@ -22,7 +22,6 @@ func (r *Request) AddRe(method string, route string, ac string, ct string) {
 		r.RequestList[reKey] = make(map[string]string)
 	}
 
-	//Add ["GET"] // ["POST"]
 	var elm = map[string]string{"method": method, "route": route, "ac": ac, "ct": ct} //定义插入数组
 	r.RequestList[reKey] = elm                                                        //把路由插入
 }
@@ -81,7 +80,6 @@ func (r *Request) GetRInfo(Rr *http.Request, routeList map[string]map[string]str
 					}
 				}
 				break
-
 			}
 		}
 	}
