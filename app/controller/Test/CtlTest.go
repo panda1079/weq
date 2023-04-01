@@ -75,12 +75,13 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 	library.SetLog(postData, "postData") //输出到日志
 
-	//library.OutJson(CH, postData) //输出到web页面
+	library.OutJson(CH, postData) //输出到web页面
 
 	params := make(map[string]interface{})
 	extend := make(map[string]string)
 
 	library.SetLog(library.MakeRequest("https://api.baidu.com", params, extend), "请求内容")
+
 	library.OutHtml(CH, "test.html", postData) //输出html（允许轻微替换内容）
 
 	library.SetLog(CH.ClientRealIP(), "当前IP")

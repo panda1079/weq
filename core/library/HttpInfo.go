@@ -13,6 +13,7 @@ import (
 
 // HttpInfo 请求内容
 type HttpInfo struct {
+	IsCli          bool
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
 	Body           string
@@ -23,11 +24,25 @@ type HttpInfo struct {
 
 // GetHeader 获取请求头信息
 func (CH *HttpInfo) GetHeader(key string) string {
+	//对于cli的特殊关照
+	if CH.IsCli {
+		return ""
+	}
 	return CH.Request.Header.Get(key)
 }
 
 // RH 获取请求参数不编码html  key : 变量名    defaultValue : 默认值
 func (CH *HttpInfo) RH(key string, defaultValue any) interface{} {
+	//对于cli的特殊关照
+	if CH.IsCli {
+		if value, ok := CH.Mount[key]; ok {
+			return value
+		}
+
+		//实在没有，就把默认值返回去吧
+		return defaultValue
+	}
+
 	//获取GET参数
 	var values = CH.Request.URL.Query()
 	var res = values.Get(key)
@@ -96,6 +111,25 @@ func (CH *HttpInfo) GetReUrl() string {
 // ClientRealIP 获取用户的真实IP
 func (CH *HttpInfo) ClientRealIP() string {
 	ip := "127.0.0.1" //弄个初始值
+
+	//对于cli的特殊关照
+	if CH.IsCli {
+		addRs, err := net.InterfaceAddrs()
+		if err != nil {
+			SetLog(err, "获取本机ip失败")
+			return ip
+		}
+
+		for _, address := range addRs {
+			// 检查ip地址判断是否回环地址
+			if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+				if ipNet.IP.To4() != nil {
+					return ipNet.IP.String()
+				}
+			}
+		}
+		return ip
+	}
 
 	ipSub, _, _ := net.SplitHostPort(CH.Request.RemoteAddr)
 	if net.ParseIP(ipSub) != nil {

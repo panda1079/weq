@@ -17,16 +17,27 @@ import (
 // Util 公共工具
 
 // SetLog 输出日志内容
-func SetLog(a any, info string) {
+func SetLog(log any, info string) {
 	//当前时间戳
 	t1 := time.Now().Unix() //1564552562
 	t2 := time.Unix(t1, 0).String()
-
-	fmt.Println("[" + t2 + "][" + info + "][info]：[" + InterfaceToString(a) + "]") //输出头描述
+	fmt.Print("[" + t2 + "][" + info + "][info]：[") //输出头描述
+	fmt.Print(log)                                  //输出内容
+	fmt.Println("]")                                //直接结尾
 }
 
 // GetRequests //获取所有请求内容（用于输出日志,直接返回json字符串）
 func GetRequests(CH HttpInfo) string {
+	// 对于cli模式的特殊照顾
+	if CH.IsCli {
+		r := make(map[string]interface{})
+		for k, v := range CH.Mount {
+			r[k] = v
+		}
+		return MapToJson(r)
+	}
+
+	// 正常的http模式
 	if strings.Contains(CH.GetHeader("Content-Type"), "application/json") {
 		return CH.Body
 	} else {
@@ -53,6 +64,13 @@ func OutJson(CH HttpInfo, OutData map[string]interface{}) {
 
 	//CH.ResponseWriter.WriteHeader(200) //设置响应码
 
+	//对cli模式的特殊照顾
+	if CH.IsCli {
+		SetLog("["+CH.ClientRealIP()+"]/  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+		SetLog(string(jsonBytes), "输出页面")
+		return
+	}
+
 	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
 
 	fprintf, err := fmt.Fprintf(CH.ResponseWriter, string(jsonBytes)) // 发送响应到客户端
@@ -73,6 +91,13 @@ func OutHtml(CH HttpInfo, html string, OutData map[string]interface{}) {
 
 	for k, v := range OutData {
 		html = strings.Replace(html, "<{$"+k+"}>", InterfaceToString(v), -1)
+	}
+
+	//对cli模式的特殊照顾
+	if CH.IsCli {
+		SetLog("["+CH.ClientRealIP()+"]/  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+		SetLog(html, "输出页面")
+		return
 	}
 
 	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志

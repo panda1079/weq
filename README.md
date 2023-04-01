@@ -6,10 +6,19 @@
 go run main.go
 ```
 
-### 测试URL
+### URL模式测试
 ```
 http://127.0.0.1:9091/CtlTest/TestA
 http://127.0.0.1:9091/test/test
+```
+
+### cli模式测试
+```
+// ac:控制器
+// ct：控制器内的方法
+// from：使用get形式带入的参数（复杂的字符串请url编码之后再输入）
+
+go run main.go -m cli -ct CtlTest -ac TestA -from "a=1&b=2&c=3&d=abc&d=%E6%98%AF%E4%B8%AD%E6%96%87url&e=是中文"
 ```
 
 ### 一个简单的类PHP的golang结构
