@@ -92,14 +92,14 @@ func (r *MysqlG) GraveAccent(item string) string {
 }
 
 // GetAll 获取多条的数据
-func (r *MysqlG) GetAll(sqlStr string) (rows []map[string]string) {
+func (r *MysqlG) GetAll(sqlStr string) (rows []map[string]interface{}) {
 	list, _ := r.Connections[r.connectionName].Query(sqlStr) //把数据查出来
 	fields, _ := list.Columns()                              //返回列名
 
 	//逐行读取并插入
 	for list.Next() {
 		scans := make([]interface{}, len(fields))
-		row := make(map[string]string)
+		row := make(map[string]interface{})
 
 		for i := range scans {
 			scans[i] = &scans[i]
@@ -122,7 +122,7 @@ func (r *MysqlG) GetAll(sqlStr string) (rows []map[string]string) {
 }
 
 // GetOne 获取单条的数据
-func (r *MysqlG) GetOne(SqlStr string) map[string]string {
+func (r *MysqlG) GetOne(SqlStr string) map[string]interface{} {
 	// 去除连续空格
 	SqlStr = strings.TrimSpace(SqlStr)
 	Len := len(SqlStr)
@@ -137,7 +137,7 @@ func (r *MysqlG) GetOne(SqlStr string) map[string]string {
 		return res[0]
 	}
 
-	return map[string]string{}
+	return map[string]interface{}{}
 }
 
 // UpDate 以新的$key_values更新mysql数据

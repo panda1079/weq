@@ -21,6 +21,13 @@ http://127.0.0.1:9091/test/test
 go run main.go -m cli -ct CtlTest -ac TestA -from "a=1&b=2&c=3&d=abc&d=%E6%98%AF%E4%B8%AD%E6%96%87url&e=是中文"
 ```
 
+### socket模式测试（socket是延长的tcp，就直接做到一起了）
+```
+go run main.go
+
+// 测试链接 ： http://127.0.0.1:9091/test
+```
+
 ### 一个简单的类PHP的golang结构
 1.R函数可以直接获取url中的自定义参数以及GET/POST和raw的json参数
 
@@ -29,3 +36,7 @@ go run main.go -m cli -ct CtlTest -ac TestA -from "a=1&b=2&c=3&d=abc&d=%E6%98%AF
 go get -u github.com/go-sql-driver/mysql
 ```
  
+3.Go语言没有完善的web socker包，需要导入websocket (待完善)
+```
+go get github.com/gorilla/websocket
+```

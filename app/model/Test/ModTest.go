@@ -43,6 +43,17 @@ func (r *ModTest) Test2(Data map[string]interface{}) map[string]interface{} {
 	library.SetLog(r.SS.RDb.Connection("write").Get(key), "查询数据")
 	library.SetLog(r.SS.RDb.Connection("write").Del(key), "删除数据")
 	library.SetLog(r.SS.RDb.Connection("write").Get(key), "查询数据")
-	return map[string]interface{}{"code": "1", "msg": "子mod2拉起成功"}
 
+	return map[string]interface{}{"code": "1", "msg": "子mod2拉起成功"}
+}
+
+// Test3 关于 Socket的测试
+func (r *ModTest) Test3(msg []byte) []byte {
+	//"SELECT `id`,`add_time` FROM `test` WHERE add_time = '123456789' "
+
+	//res := library.MapToJson(r.SS.MDb.Connection("write").GetOne(string(msg))) //查出内容直接输出
+
+	res := library.MapToJson(map[string]interface{}{"code": 1, "data": "进入的数据：" + string(msg)})
+
+	return library.StringToBytes(res)
 }

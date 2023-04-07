@@ -12,7 +12,7 @@ type Request struct {
 }
 
 // AddRe 添加路由内容到数组 "GET__/order/order_list":map[string]string{"ac":"order_list","ct":"CtlOrder","method":"GET","route":"/order/order_list"}
-func (r *Request) AddRe(method string, route string, ac string, ct string) {
+func (r *Request) AddRe(method string, treaty string, route string, ac string, ct string) {
 	var reKey = method + "__" + route
 
 	if r.RequestList == nil {
@@ -22,18 +22,23 @@ func (r *Request) AddRe(method string, route string, ac string, ct string) {
 		r.RequestList[reKey] = make(map[string]string)
 	}
 
-	var elm = map[string]string{"method": method, "route": route, "ac": ac, "ct": ct} //定义插入数组
-	r.RequestList[reKey] = elm                                                        //把路由插入
+	var elm = map[string]string{"method": method, "treaty": treaty, "route": route, "ac": ac, "ct": ct} //定义插入数组
+	r.RequestList[reKey] = elm                                                                          //把路由插入
 }
 
 // Get 添加get路由
 func (r *Request) Get(route string, ac string, ct string) {
-	r.AddRe("GET", route, ac, ct) //集中插入
+	r.AddRe("GET", "GET", route, ac, ct) //集中插入
 }
 
 // Post 添加post路由
 func (r *Request) Post(route string, ac string, ct string) {
-	r.AddRe("POST", route, ac, ct) //集中插入                                                     //把路由插入
+	r.AddRe("POST", "POST", route, ac, ct) //集中插入
+}
+
+// WS 添加websocket路由
+func (r *Request) WS(route string, ac string, ct string) {
+	r.AddRe("GET", "WS", route, ac, ct) //集中插入
 }
 
 // AddRoute 支持多种请求方式
@@ -45,6 +50,10 @@ func (r *Request) AddRoute(methods [2]string, route string, ac string, ct string
 
 		if value1 == "Post" {
 			r.Post(route, ac, ct)
+		}
+
+		if value1 == "WS" {
+			r.WS(route, ac, ct)
 		}
 	}
 }
@@ -70,8 +79,6 @@ func (r *Request) GetRInfo(Rr *http.Request, routeList map[string]map[string]str
 				run = Value1
 				for i, name := range groupNames {
 					if i != 0 && name != "" {
-						//SetLog(name + "-----" + match[i])
-
 						//对路由配置中的变量进行替换
 						run["ac"] = strings.Replace(run["ac"], "{"+name+"}", match[i], -1)
 						run["ct"] = strings.Replace(run["ct"], "{"+name+"}", match[i], -1)

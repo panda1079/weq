@@ -1,6 +1,7 @@
 package main // 声明此文件为可执行程序
 
 import (
+	"fmt"
 	"log"      // 日志记录
 	"net/http" // 处理 HTTP 请求
 
@@ -80,11 +81,13 @@ func main() {
 	// 启动聊天室
 	go room.Run()
 
+	fmt.Print(room)
+
 	// 处理 WebSocket 连接请求
-	http.HandleFunc("/ws", room.HandleWebSocket)
+	http.HandleFunc("/CtlTest/TestB", room.HandleWebSocket)
 
 	// 监听端口并启动 HTTP 服务
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":9091", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

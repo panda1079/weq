@@ -14,6 +14,7 @@ import (
 
 var RegisterMessage = make(map[string]interface{})
 var routeList = routes.Web() //加载路由
+var SS = library.ServerS{}
 
 // LoadRouteHttp 加载控制器函数
 func LoadRouteHttp(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,17 @@ func LoadRouteHttp(w http.ResponseWriter, r *http.Request) {
 	lr := library.Request{}
 	Mount, RInfo := lr.GetRInfo(r, routeList, route)
 	HttpInfo.Mount = Mount
+
+	//对于websocket的特殊预制处理
+	if RInfo["treaty"] == "WS" {
+		var sk = RInfo["ac"] + "_-_" + RInfo["ct"]
+		var ok = false
+		ok, SS.WSk[sk], HttpInfo.ThisConn = SS.RunWsk(sk, HttpInfo)
+		if !ok {
+			library.OutJson(HttpInfo, map[string]interface{}{"code": "0", "msg": "处理升级 WebSocket 连接失败"})
+			return
+		}
+	}
 
 	//判断是否存在路由
 	if RInfo != nil {
@@ -100,7 +112,6 @@ func LoadRouteCli(ct string, ac string, fBox map[string]string) {
 
 func Init() {
 	//加载预设服务模块
-	var SS = library.ServerS{}
 	SS.InitServerS()
 
 	//初始化控制器池

@@ -109,6 +109,11 @@ func OutHtml(CH HttpInfo, html string, OutData map[string]interface{}) {
 	}
 }
 
+// Time 获取时间戳
+func Time() int64 {
+	return int64(time.Now().Unix())
+}
+
 // MapToJson map转json
 func MapToJson(param map[string]interface{}) string {
 	dataType, _ := json.Marshal(param)
@@ -144,6 +149,12 @@ func InterfaceToString(inter interface{}) string {
 		break
 	}
 	return res
+}
+
+// StringToBytes 将string转为[]byte
+func StringToBytes(s string) []byte {
+	bytes := []byte(s)
+	return bytes
 }
 
 // In 判断字符串是否在数组种

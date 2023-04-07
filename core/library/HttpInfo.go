@@ -2,6 +2,7 @@ package library
 
 import (
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"html"
 	"mime/multipart"
 	"net"
@@ -16,6 +17,7 @@ type HttpInfo struct {
 	IsCli          bool
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
+	ThisConn       *websocket.Conn // socket模式下的当前连接通道
 	Body           string
 	Mount          map[string]string
 	Form           url.Values
