@@ -2,6 +2,7 @@ package controller
 
 import (
 	"core/library"
+	"github.com/gorilla/websocket"
 	"model"
 	ModTest "model/Test"
 	"reflect"
@@ -94,14 +95,28 @@ func (r *CtlTest) TestA(CH library.HttpInfo) {
 
 // TestB 关于socket的测试
 func (r *CtlTest) TestB(CH library.HttpInfo) {
+	getData := map[string]interface{}{
+		"id": CH.R("id", library.Time(), "int"), //弄一个初始id
+	}
+
 	room := r.SS.WSk["TestB_-_CtlTest"] //socket的连接池名以控制器+函数名为命名
 
 	// 连接到注册通道中
 	room.Register <- CH.ThisConn
 
+	//为自定义推送预先创建对象
+	id := library.InterfaceToString(getData["id"])
+	if id == "666" { //如果id是666的就进入特定推送
+		library.SetLog(id, "id")           //打印一下
+		var cones []*websocket.Conn        //创建一个新的连接切片，用于存储将要添加到广播对象中的WebSocket连接实例
+		cones = append(cones, CH.ThisConn) //将需要添加到广播对象中的WebSocket连接实例添加到该切片中。
+		room.SpecificBroadcast[id] = cones //将刚刚创建的连接切片添加到room.specificBroadcast映射表中，并指定广播对象的名称作为键名
+	}
+
 	// 循环读取客户端发送的消息并将其广播到所有连接的客户端
-	room = room.Airing(CH, func(message []byte) []byte {
+	room = room.Airing(CH, func(message []byte) ([]string, []byte) {
 		Mod2 := ModTest.ModTest{SS: r.SS}
 		return Mod2.Test3(message) //把mod的内容返回给前端
 	})
+
 }

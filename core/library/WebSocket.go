@@ -1,7 +1,6 @@
 package library
 
 import (
-	"bytes"
 	"github.com/gorilla/websocket"
 	"net/http"
 )
@@ -72,18 +71,8 @@ func (room *WebSocket) Run() {
 	}
 }
 
-// parseTarget 解析广播消息中的指定对象
-func (room *WebSocket) parseTarget(message []byte) (string, bool) {
-	if len(message) > 0 && message[0] == '@' {
-		if i := bytes.IndexByte(message, ' '); i > 1 {
-			return string(message[1:i]), true
-		}
-	}
-	return "", false
-}
-
 // Airing 广播内容
-func (room *WebSocket) Airing(CH HttpInfo, Clawback func(message []byte) []byte) *WebSocket {
+func (room *WebSocket) Airing(CH HttpInfo, Clawback func(message []byte) ([]string, []byte)) *WebSocket {
 	// 循环读取客户端发送的消息并将其广播到所有连接的客户端
 	for {
 		_, message, err := CH.ThisConn.ReadMessage()
@@ -100,16 +89,21 @@ func (room *WebSocket) Airing(CH HttpInfo, Clawback func(message []byte) []byte)
 			continue
 		}
 
-		// 如果指定了广播对象，则只向该对象中的连接发送消息
-		if target, ok := room.parseTarget(message); ok {
-			if cones, exists := room.SpecificBroadcast[target]; exists {
-				for _, c := range cones {
-					c.WriteMessage(websocket.TextMessage, Clawback(message))
+		specific, msg := Clawback(message) //先把输出的最终内容捞出来
+
+		// 如果没有指定广播对象或者广播对象组是空的，则直接全员广播
+
+		if len(room.SpecificBroadcast) == 0 || len(specific) == 0 {
+			// 否则把mod的内容返回给前端
+			room.Broadcast <- msg
+		} else {
+			for _, target := range specific {
+				if cones, exists := room.SpecificBroadcast[target]; exists {
+					for _, c := range cones {
+						c.WriteMessage(websocket.TextMessage, msg)
+					}
 				}
 			}
-		} else {
-			// 否则把mod的内容返回给前端
-			room.Broadcast <- Clawback(message)
 		}
 	}
 

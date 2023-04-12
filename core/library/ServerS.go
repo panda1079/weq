@@ -41,10 +41,11 @@ func (r *ServerS) RunWsk(key string, CH HttpInfo) (bool, *WebSocket, *websocket.
 			addTime:  time,
 			lastTime: time,
 
-			clients:    make(map[*websocket.Conn]bool), // 客户端连接映射表
-			Broadcast:  make(chan []byte),              // 广播消息通道
-			Register:   make(chan *websocket.Conn),     // 连接注册通道
-			Unregister: make(chan *websocket.Conn),     // 连接注销通道
+			clients:           make(map[*websocket.Conn]bool),     // 客户端连接映射表
+			Broadcast:         make(chan []byte),                  // 广播消息通道
+			Register:          make(chan *websocket.Conn),         // 连接注册通道
+			Unregister:        make(chan *websocket.Conn),         // 连接注销通道
+			SpecificBroadcast: make(map[string][]*websocket.Conn), // 连接注销通道
 		}
 
 		//协程拉起

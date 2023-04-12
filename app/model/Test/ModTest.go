@@ -48,12 +48,17 @@ func (r *ModTest) Test2(Data map[string]interface{}) map[string]interface{} {
 }
 
 // Test3 关于 Socket的测试
-func (r *ModTest) Test3(msg []byte) []byte {
+func (r *ModTest) Test3(msg []byte) ([]string, []byte) {
 	//"SELECT `id`,`add_time` FROM `test` WHERE add_time = '123456789' "
 
 	//res := library.MapToJson(r.SS.MDb.Connection("write").GetOne(string(msg))) //查出内容直接输出
 
 	res := library.MapToJson(map[string]interface{}{"code": 1, "data": "进入的数据：" + string(msg)})
 
-	return library.StringToBytes(res)
+	//自定义发送id对象(也可以加逻辑选择性推送)
+	specific := []string{
+		//"666",
+	}
+
+	return specific, library.StringToBytes(res)
 }

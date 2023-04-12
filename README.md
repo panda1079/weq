@@ -25,7 +25,8 @@ go run main.go -m cli -ct CtlTest -ac TestA -from "a=1&b=2&c=3&d=abc&d=%E6%98%AF
 ```
 go run main.go
 
-// 测试链接 ： http://127.0.0.1:9091/test
+//id 可以为选择性推送的标记
+// 测试链接 ： http://127.0.0.1:9091/test?id=666
 ```
 
 ### 一个简单的类PHP的golang结构
