@@ -1,23 +1,23 @@
-package model
+package Test
 
 import (
 	"core/library"
 )
 
-type ModTest struct {
+type TestModel struct {
 	SS library.ServerS
 }
 
 // Test 关于mysql的测试
-func (r *ModTest) Test(Data map[string]interface{}) map[string]interface{} {
+func (r *TestModel) Test(Data map[string]interface{}) map[string]interface{} {
 
 	library.SetLog(Data, "数据日志")
 
-	kv := map[string]string{
+	kv := map[string]interface{}{
 		"add_time": "123456789",
 	}
 
-	kv1 := map[string]string{
+	kv1 := map[string]interface{}{
 		"add_time": "987654321",
 	}
 
@@ -33,12 +33,12 @@ func (r *ModTest) Test(Data map[string]interface{}) map[string]interface{} {
 }
 
 // Test2 关于Redis的测试
-func (r *ModTest) Test2(Data map[string]interface{}) map[string]interface{} {
+func (r *TestModel) Test2(Data map[string]interface{}) map[string]interface{} {
 	library.SetLog(Data, "数据日志")
 
 	var key = "TestKey"
 
-	library.SetLog(r.SS.RDb.Connection("write").Set(key, library.MapToJson(Data), 0), "插入数据")
+	library.SetLog(r.SS.RDb.Connection("write").Set(key, library.JsonEncode(Data), 0), "插入数据")
 	library.SetLog(r.SS.RDb.Connection("write").Exists(key), "查询数据是否存在")
 	library.SetLog(r.SS.RDb.Connection("write").Get(key), "查询数据")
 	library.SetLog(r.SS.RDb.Connection("write").Del(key), "删除数据")
@@ -48,12 +48,12 @@ func (r *ModTest) Test2(Data map[string]interface{}) map[string]interface{} {
 }
 
 // Test3 关于 Socket的测试
-func (r *ModTest) Test3(msg []byte) ([]string, []byte) {
+func (r *TestModel) Test3(msg []byte) ([]string, []byte) {
 	//"SELECT `id`,`add_time` FROM `test` WHERE add_time = '123456789' "
 
 	//res := library.MapToJson(r.SS.MDb.Connection("write").GetOne(string(msg))) //查出内容直接输出
 
-	res := library.MapToJson(map[string]interface{}{"code": 1, "data": "进入的数据：" + string(msg)})
+	res := library.JsonEncode(map[string]interface{}{"code": 1, "data": "进入的数据：" + string(msg)})
 
 	//自定义发送id对象(也可以加逻辑选择性推送)
 	specific := []string{
