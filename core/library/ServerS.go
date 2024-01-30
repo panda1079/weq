@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// ServerS 关于服务传递的公共函数（不能进去之后继承，真是让人头秃的设置）
+// ServerS 关于服务传递的公共函数（不能进去之后继承，真是让人头秃）
 type ServerS struct {
 	MDb MysqlG
 	RDb RedisG
@@ -32,7 +32,7 @@ func (r *ServerS) InitServerS() {
 // RunWsk 添加WebSocket元素
 func (r *ServerS) RunWsk(key string, CH HttpInfo) (bool, *WebSocket, *websocket.Conn) {
 	//定义参数
-	time := Time()
+	time := StringToInt64(Time())
 
 	if _, ok := r.WSk[key]; !ok {
 		// 创建聊天室对象

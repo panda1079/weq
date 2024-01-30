@@ -69,31 +69,19 @@ func (r *RedisG) Load(name string) *redis.Client {
 	return r.Connections[name]
 }
 
+// GetConnName 获取connectionName
+func (r *RedisG) GetConnName() string {
+	if Empty(r.connectionName) {
+		return "write"
+	}
+	return r.connectionName
+}
+
 // Set 写入数据
 func (r *RedisG) Set(key string, value interface{}, expiration time.Duration) bool {
-	err := r.Connections[r.connectionName].Set(key, value, expiration).Err()
+	err := r.Connections[r.GetConnName()].Set(key, value, time.Second*expiration).Err()
 	if err != nil {
-		SetLog(err, "Redis-"+r.connectionName+"-写入数据错误")
-		return false
-	}
-	return true
-}
-
-// Get 读取数据
-func (r *RedisG) Get(key string) string {
-	val, err := r.Connections[r.connectionName].Get(key).Result()
-	if err != nil {
-		SetLog(err, "Redis-"+r.connectionName+"-读取数据错误")
-		return ""
-	}
-	return val
-}
-
-// Del 删除数据
-func (r *RedisG) Del(key string) bool {
-	err := r.Connections[r.connectionName].Del(key).Err()
-	if err != nil {
-		SetLog(err, "Redis-"+r.connectionName+"-删除数据错误")
+		SetLog(err, "Redis-"+r.GetConnName()+"-写入数据错误")
 		return false
 	}
 	return true
@@ -101,10 +89,82 @@ func (r *RedisG) Del(key string) bool {
 
 // Exists 检查key是否存在
 func (r *RedisG) Exists(key string) bool {
-	err := r.Connections[r.connectionName].Exists(key).Err()
+	val, err := r.Connections[r.GetConnName()].Exists(key).Result()
 	if err != nil {
-		SetLog(err, "Redis-"+r.connectionName+"-检查数据错误")
+		SetLog(err, "Redis-"+r.GetConnName()+"-检查数据错误")
+		return false
+	}
+
+	//EXISTS 命令可以检查指定键是否存在，并返回一个整数值，表示键存在时返回1，不存在时返回0
+	return val > 0
+}
+
+// Get 读取数据
+func (r *RedisG) Get(key string) string {
+	//先检查一下key是否存在
+	if !r.Exists(key) {
+		return ""
+	}
+
+	val, err := r.Connections[r.GetConnName()].Get(key).Result()
+	if err != nil {
+		SetLog(err, "Redis-"+r.GetConnName()+"-读取数据错误")
+		return ""
+	}
+	return val
+}
+
+// Del 删除数据
+func (r *RedisG) Del(key string) bool {
+	//先检查一下key是否存在
+	if !r.Exists(key) {
+		return true
+	}
+
+	err := r.Connections[r.GetConnName()].Del(key).Err()
+	if err != nil {
+		SetLog(err, "Redis-"+r.GetConnName()+"-删除数据错误")
 		return false
 	}
 	return true
+}
+
+// LLen 返回列表的长度。 如果列表 key 不存在，则 key 被解释为一个空列表，返回 0。 如果 key 不是列表类型，返回一个错误。
+func (r *RedisG) LLen(key string) int64 {
+	//先检查一下key是否存在
+	if !r.Exists(key) {
+		return 0
+	}
+
+	val, err := r.Connections[r.GetConnName()].LLen(key).Result()
+	if err != nil {
+		SetLog(err, "Redis-"+r.GetConnName()+"-读取列表长度错误")
+		return 0
+	}
+	return val
+}
+
+// LPush 从列表左边插入数据
+func (r *RedisG) LPush(key string, value ...interface{}) bool {
+	err := r.Connections[r.GetConnName()].LPush(key, value...).Err()
+	if err != nil {
+		SetLog(err, "Redis-"+r.GetConnName()+"-从列表左边插入数据错误")
+		return false
+	}
+	return true
+}
+
+// RPop 从列表的右边删除第一个数据，并返回删除的数据
+func (r *RedisG) RPop(key string) string {
+	//先检查一下key是否存在
+	if !r.Exists(key) {
+		return ""
+	}
+
+	val, err := r.Connections[r.GetConnName()].RPop(key).Result()
+	if err != nil {
+		SetLog(err, "Redis-"+r.GetConnName()+"-读取数据错误")
+		return ""
+	}
+	return val
 }

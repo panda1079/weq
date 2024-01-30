@@ -1,14 +1,17 @@
 package library
 
 import (
-	"bytes"
+	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	"io"
+	"io/fs"
 	"net/http"
-	"regexp"
+	"net/url"
+	"os"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,13 +20,15 @@ import (
 // Util 公共工具
 
 // SetLog 输出日志内容
-func SetLog(log any, info string) {
+func SetLog(logStr any, info string) {
 	//当前时间戳
 	t1 := time.Now().Unix() //1564552562
 	t2 := time.Unix(t1, 0).String()
-	fmt.Print("[" + t2 + "][" + info + "][info]：[") //输出头描述
-	fmt.Print(log)                                  //输出内容
-	fmt.Println("]")                                //直接结尾
+	str := fmt.Sprint("["+t2+"]["+info+"][info]：[", logStr, "]")
+
+	//输出文件
+	fmt.Println(str)
+
 }
 
 // GetRequests //获取所有请求内容（用于输出日志,直接返回json字符串）
@@ -34,7 +39,7 @@ func GetRequests(CH HttpInfo) string {
 		for k, v := range CH.Mount {
 			r[k] = v
 		}
-		return MapToJson(r)
+		return JsonEncode(r)
 	}
 
 	// 正常的http模式
@@ -43,37 +48,66 @@ func GetRequests(CH HttpInfo) string {
 	} else {
 		r := make(map[string]interface{})
 		for k, v := range CH.Form {
-			r[k] = v
+			vv := InterfaceToString(v[0])
+			//对于加密内容的特殊处理
+			if CH.TransmissionMod == 2 {
+				vv = CH.Encryption.HexToStr(CH.Encryption.Dehex(InterfaceToString(vv)))
+			}
+			r[k] = vv
 		}
-		return MapToJson(r)
+		return JsonEncode(r)
+	}
+}
+
+// OutStr 文本输出
+func OutStr(CH HttpInfo, Str interface{}) {
+
+	CH.ResponseWriter.WriteHeader(200) //设置响应码
+
+	//对cli模式的特殊照顾
+	if CH.IsCli {
+		SetLog("["+CH.ClientRealIP()+"]/  :  "+InterfaceToString(Str)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+		SetLog(InterfaceToString(Str), "输出页面")
+		return
+	}
+
+	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+InterfaceToString(Str)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+
+	fprintf, err := fmt.Fprintf(CH.ResponseWriter, InterfaceToString(Str)) // 发送响应到客户端
+	if err != nil {
+		SetLog(fprintf, "错误输出")
+		return
 	}
 }
 
 // OutJson json输出
 func OutJson(CH HttpInfo, OutData map[string]interface{}) {
-	jsonBytes, err := json.Marshal(OutData) //转换json
-	if err != nil {
-		fmt.Println(err)
-		fprintf, err := fmt.Fprintf(CH.ResponseWriter, "{\"code\": \"1\", \"route\": \"输出错误\"}") // 发送响应到客户端
-		if err != nil {
-			SetLog(fprintf, "错误输出")
-			return
+	OutStr := ""
+
+	if InterfaceToString(CH.TransmissionMod) == "2" {
+		Encryption := Encryption{}
+		OutMap := map[string]interface{}{}
+		//循环获取需要的参数
+		for k, v := range OutData {
+			OutMap[k] = Encryption.Enhex(Encryption.StrToHex(JsonEncode(v)))
 		}
-		return
+		OutStr = JsonEncode(OutMap) //转换json
+	} else {
+		OutStr = JsonEncode(OutData) //转换json
 	}
 
-	//CH.ResponseWriter.WriteHeader(200) //设置响应码
+	CH.ResponseWriter.WriteHeader(200) //设置响应码
 
 	//对cli模式的特殊照顾
 	if CH.IsCli {
-		SetLog("["+CH.ClientRealIP()+"]/  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
-		SetLog(string(jsonBytes), "输出页面")
+		SetLog("["+CH.ClientRealIP()+"]/  :  "+JsonEncode(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+		SetLog(OutStr, "输出页面")
 		return
 	}
 
-	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+JsonEncode(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
 
-	fprintf, err := fmt.Fprintf(CH.ResponseWriter, string(jsonBytes)) // 发送响应到客户端
+	fprintf, err := fmt.Fprintf(CH.ResponseWriter, OutStr) // 发送响应到客户端
 	if err != nil {
 		SetLog(fprintf, "错误输出")
 		return
@@ -82,7 +116,7 @@ func OutJson(CH HttpInfo, OutData map[string]interface{}) {
 
 // OutHtml 输出http
 func OutHtml(CH HttpInfo, html string, OutData map[string]interface{}) {
-	data, err := ioutil.ReadFile("./app/template/" + html)
+	data, err := os.ReadFile("./app/template/" + html)
 	if err != nil {
 		SetLog(err, "错误读取文件")
 		return
@@ -95,12 +129,12 @@ func OutHtml(CH HttpInfo, html string, OutData map[string]interface{}) {
 
 	//对cli模式的特殊照顾
 	if CH.IsCli {
-		SetLog("["+CH.ClientRealIP()+"]/  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+		SetLog("["+CH.ClientRealIP()+"]/  :  "+JsonEncode(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
 		SetLog(html, "输出页面")
 		return
 	}
 
-	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+MapToJson(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
+	SetLog("["+CH.ClientRealIP()+"]"+CH.Request.URL.RequestURI()+"  :  "+JsonEncode(OutData)+"  :  "+GetRequests(CH), "正常推出") // 写个日志
 
 	fprintf, err := fmt.Fprintf(CH.ResponseWriter, html) // 发送响应到客户端
 	if err != nil {
@@ -110,25 +144,154 @@ func OutHtml(CH HttpInfo, html string, OutData map[string]interface{}) {
 }
 
 // Time 获取时间戳
-func Time() int64 {
-	return int64(time.Now().Unix())
+func Time() string {
+	return InterfaceToString(time.Now().Unix())
 }
 
-// MapToJson map转json
-func MapToJson(param map[string]interface{}) string {
-	dataType, _ := json.Marshal(param)
-	dataString := string(dataType)
-	return dataString
+// GetMillisecond 获取毫秒级时间戳
+func GetMillisecond() string {
+	return InterfaceToString(time.Now().UnixNano() / int64(time.Millisecond))
 }
 
-// JsonToMap json转map
-func JsonToMap(str string) map[string]interface{} {
+// StrToTime 获取指定时间时间戳 格式为（年-月-日 时:分:秒  2023-08-10 12:00:00）
+func StrToTime(specifiedTime string) string {
+	// 将字符串转换为 time.Time 类型
+	t, err := time.Parse("2006-01-02 15:04:05", specifiedTime)
+	if err != nil {
+		SetLog(err, "错误输出")
+		return "0"
+	}
+	// 获取时间戳
+	return InterfaceToString(t.Unix() - 28800) //由于系统时间会直接加到东8的八小时，所以要减掉
+}
+
+// Date 时间戳转日期(通PHP->date)
+//
+//	Y ：年（四位数）大写
+//	m : 月（两位数，首位不足补0） 小写
+//	d ：日（两位数，首位不足补0） 小写
+//	H：小时 带有首位零的 24 小时小时格式
+//	i ：带有首位零的分钟
+//	s ：带有首位零的秒（00 -59）
+func Date(format string) string {
+	now := time.Now() //获取时间
+
+	//处理星期格式
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+
+	format = strings.Replace(format, "Y", now.Format("2006"), -1)         //年
+	format = strings.Replace(format, "m", now.Format("01"), -1)           //月
+	format = strings.Replace(format, "w", fmt.Sprintf("%d", weekday), -1) //星期
+	format = strings.Replace(format, "d", now.Format("02"), -1)           //日
+	format = strings.Replace(format, "H", now.Format("15"), -1)           //小时
+	format = strings.Replace(format, "i", now.Format("04"), -1)           //分钟
+	format = strings.Replace(format, "s", now.Format("05"), -1)           //秒
+
+	return format
+}
+
+// JsonEncode map转json
+func JsonEncode(param interface{}) string {
+	switch param.(type) {
+	case map[string]interface{}:
+		dataType, _ := json.Marshal(param)
+		dataString := string(dataType)
+		return dataString
+	case []interface{}:
+		dataType, _ := json.Marshal(param)
+		dataString := string(dataType)
+		return dataString
+	default:
+		return InterfaceToString(param)
+	}
+}
+
+// JsonDecode json转map/array
+func JsonDecode(str string) map[string]interface{} {
 	var tempMap map[string]interface{}
+	if Empty(str) {
+		return map[string]interface{}{}
+	}
 	err := json.Unmarshal([]byte(str), &tempMap)
 	if err != nil {
 		panic(err)
 	}
+
+	tempMap = JsonDecodeHandling(tempMap)
+
 	return tempMap
+}
+
+// JsonDecodeHandling 外包关于JsonDecode的特殊处理
+func JsonDecodeHandling(tempMap map[string]interface{}) map[string]interface{} {
+	// 遍历map并处理长数字以及其他可能的错误
+	for key, value := range tempMap {
+		tempMap[key] = JsonDecodeHandling2(value)
+	}
+	return tempMap
+}
+
+// JsonDecodeHandling2 外包关于JsonDecode的特殊处理2
+func JsonDecodeHandling2(value interface{}) interface{} {
+	switch v := value.(type) {
+	case string:
+		return value.(string)
+	case int:
+		return strconv.Itoa(value.(int))
+	case float32:
+		if Float32Value, ok := value.(float32); ok {
+			if Float32Value == 0 {
+				//由于浮点数0的精度没有定义，被表示为空字符串，这里是对于0的处理
+				return "0"
+			} else {
+				//对于长数字的处理
+				float64str := float64(Float32Value)
+				str := strconv.FormatFloat(float64str, 'f', -1, 32)
+				return strings.TrimRight(strings.TrimRight(str, "0"), ".")
+			}
+		}
+	case float64:
+		if Float64Value, ok := value.(float64); ok {
+			if Float64Value == 0 {
+				//由于浮点数0的精度没有定义，被表示为空字符串，这里是对于0的处理
+				return "0"
+			} else {
+				//对于长数字的处理
+				str := strconv.FormatFloat(Float64Value, 'f', -1, 64)
+				return strings.TrimRight(strings.TrimRight(str, "0"), ".")
+			}
+		}
+	case nil:
+		// 处理缺失字段或空值的情况
+		switch v {
+		case "age":
+			return "N/A"
+		default:
+			return ""
+		}
+	case map[string]interface{}:
+		// 如果本身就是map了就需要再深入挖掘一下了
+		if mapSI, ok := value.(map[string]interface{}); ok {
+			return JsonDecodeHandling(mapSI)
+		}
+	case []interface{}:
+		//如果本身是数组的就需要进行多级循环了
+		if arrI, ok := value.([]interface{}); ok {
+			res := []interface{}{}
+			for _, val := range arrI {
+				res = append(res, JsonDecodeHandling2(val))
+			}
+			return res
+		}
+
+	default:
+		SetLog([]interface{}{value, reflect.TypeOf(value)}, "解json遇到其他类型了")
+		return value
+	}
+	return value
 }
 
 // InterfaceToString interface转String
@@ -141,6 +304,9 @@ func InterfaceToString(inter interface{}) string {
 	case int:
 		res = strconv.Itoa(inter.(int))
 		break
+	case int64:
+		res = strconv.FormatInt(inter.(int64), 10)
+		break
 	case float32:
 		res = fmt.Sprintf("%g", inter)
 		break
@@ -151,10 +317,71 @@ func InterfaceToString(inter interface{}) string {
 	return res
 }
 
+// InterfaceToFloat64 interface转float64
+func InterfaceToFloat64(inter interface{}) float64 {
+	return StringToFloat64(InterfaceToString(inter))
+}
+
+// ReflectValueToMap reflect.Value 对象 转map
+func ReflectValueToMap(rv reflect.Value) map[string]interface{} {
+	if !rv.IsValid() {
+		//空处理
+		return map[string]interface{}{}
+	}
+
+	result := make(map[string]interface{})
+	if rv.Kind() == reflect.Map {
+		for _, key := range rv.MapKeys() {
+			value := rv.MapIndex(key).Interface()
+			result[key.String()] = value
+		}
+	}
+
+	return result
+}
+
+// InterfaceToArray interface转数组
+func InterfaceToArray(inter interface{}) []interface{} {
+	if arrI, ok := inter.([]interface{}); ok {
+		return arrI
+	} else {
+		return []interface{}{}
+	}
+}
+
+// ReflectValueToStr reflect.Value 对象 转string
+func ReflectValueToStr(rv reflect.Value) string {
+	if !rv.IsValid() {
+		//空处理
+		return ""
+	}
+	str, ok := rv.Interface().(string)
+	if ok {
+		return str
+	} else {
+		return ""
+	}
+}
+
+// StringToInt64 string转int64
+func StringToInt64(str string) int64 {
+	ins64, _ := strconv.ParseInt(str, 10, 64)
+	return ins64
+}
+
 // StringToBytes 将string转为[]byte
 func StringToBytes(s string) []byte {
-	bytes := []byte(s)
-	return bytes
+	RunBytes := []byte(s)
+	return RunBytes
+}
+
+// StringToFloat64 将string转为float64
+func StringToFloat64(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0.00
+	}
+	return f
 }
 
 // In 判断字符串是否在数组种
@@ -167,170 +394,208 @@ func In(target string, strArray []string) bool {
 	return false
 }
 
+// Md5 把字符串转成md5
+func Md5(str string) string {
+	h := md5.New()
+	h.Write([]byte(str))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 // MakeRequest 发起http请求
-//url    访问路径
-//params 参数，该数组多于1个，表示为POST
-//extend 请求伪造包头参数
-//返回的为一个请求状态，一个内容
-func MakeRequest(url string, params map[string]interface{}, extend map[string]string) map[string]interface{} {
-	if url == "" {
+// httpUrl    访问路径
+// params 参数，该数组多于1个，表示为POST
+// extend 请求伪造包头参数
+// 返回的为一个请求状态，一个内容
+func MakeRequest(httpUrl string, params map[string]interface{}, extend map[string]interface{}) map[string]interface{} {
+	if httpUrl == "" {
 		return map[string]interface{}{"code": "100"}
 	}
 
+	method := "GET"
 	//参数数组多于1个，表示为POST
-	met := "GET"
 	if len(params) > 1 {
-		met = "POST"
+		method = "POST"
 	}
 
-	paramStr, _ := json.Marshal(params) //转换格式
+	setData := url.Values{}
+	for k, v := range params {
+		setData.Set(k, InterfaceToString(v))
+	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest(met, url, bytes.NewReader(paramStr))
+	req, err := http.NewRequest(method, httpUrl, strings.NewReader(setData.Encode()))
 	if err != nil {
-		SetLog(err, "发起http请求错误1")
+		SetLog(err, "发起http请求错误1-创建请求失败")
 	}
 
 	//写入包头
+	if len(params) > 1 {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header.Set("Accept-Language", "zh-cn")
 	req.Header.Set("Connection", "Keep-Alive")
 	req.Header.Set("Cache-Control", "no-cache")
-	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	for k1, v1 := range extend {
-		req.Header.Set(k1, v1)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (HTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	for k, v := range extend {
+		req.Header.Set(k, InterfaceToString(v))
 	}
 
 	resp, err := client.Do(req)
-	var res = map[string]interface{}{
-		"Code":   resp.StatusCode,
-		"Header": resp.Header,
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		SetLog(err, "发起http请求错误2")
+		return map[string]interface{}{
+			"Code":   500,
+			"Header": nil,
+			"result": err.Error(),
+		}
 	}
 
-	res["result"] = string(body)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			SetLog(err, "发起http请求错误3")
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		SetLog(err, "发起http请求错误4")
+		return map[string]interface{}{
+			"Code":   resp.StatusCode,
+			"Header": resp.Header,
+			"result": err.Error(),
+		}
+	}
+
+	return map[string]interface{}{
+		"Code":   resp.StatusCode,
+		"Header": resp.Header,
+		"result": string(body),
+	}
+}
+
+// Empty 判断变量是否为空
+func Empty(params interface{}) bool {
+	switch val := params.(type) {
+	case nil:
+		return true
+	case bool:
+		return val == false
+	case int, float64, float32:
+		return val == 0
+	case string:
+		return val == ""
+	case []interface{}:
+		return len(val) == 0
+	case map[string]interface{}:
+		return len(val) == 0
+	case chan interface{}:
+		return val == nil
+	case func() bool:
+		return val == nil
+	default:
+		return reflect.ValueOf(val).IsZero()
+	}
+}
+
+// FilePutContents 把一个字符串写入文件中
+func FilePutContents(filePath string, content string, flags fs.FileMode) bool {
+	err := os.WriteFile(filePath, []byte(content), flags)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+// RedisRestrict 使用redis进行防刷限制
+// @param key string 在redis中的key
+// @param ttt int 超时时间
+// @param msg string 自定义提示语
+// @return bool
+func RedisRestrict(SS ServerS, CH HttpInfo, key string, ttt time.Duration, msg string) bool {
+	if Empty(msg) {
+		msg = "您的请求太频繁了，请慢点"
+	}
+	//redis限制
+	if SS.RDb.Connection("write").Exists(key) {
+		OutJson(CH, map[string]interface{}{"code": "0", "msg": msg})
+		return false
+	} else {
+		SS.RDb.Connection("write").Set(key, '1', ttt)
+		return true
+	}
+}
+
+// ArrayKeys 返回包含数组中所有键名的一个新数组
+func ArrayKeys(sortedmap map[string]interface{}) []string {
+	pairs := make([]string, 0, len(sortedmap))
+	for k := range sortedmap {
+		pairs = append(pairs, k)
+	}
+
+	return pairs
+}
+
+// Ksort 对关联数组按照键名进行升序排序：
+func Ksort(sortedmap map[string]interface{}) []string {
+
+	keys := ArrayKeys(sortedmap) //获取所有key
+	sort.Strings(keys)           // 排序
+
+	//由于map的键值对的迭代顺序是不确定的，所以只能返回数组
+	return keys
+}
+
+// JoinHttpCode 把请求参数按规律拼接起来
+// @param array paraMap 参数集
+// @param boolean urlEncode 是否url转码
+// @param boolean onEmpty 是否去除空值的元素
+func JoinHttpCode(paraMap map[string]interface{}, urlEncode bool, onEmpty bool) string {
+	buff := ""
+	pairs := Ksort(paraMap)
+
+	for _, k1 := range pairs {
+		v1 := paraMap[k1]
+		if onEmpty {
+			if !Empty(v1) {
+				v2 := InterfaceToString(v1)
+				if urlEncode {
+					v2 = url.QueryEscape(v2)
+				}
+				buff = buff + k1 + "=" + v2 + "&"
+			}
+		} else {
+			v2 := InterfaceToString(v1)
+			if urlEncode {
+				v2 = url.QueryEscape(v2)
+			}
+			buff = buff + k1 + "=" + v2 + "&"
+		}
+	}
+
+	length := len(buff)
+	if length > 0 {
+		buff = buff[:length-1]
+	}
+
+	return buff
+}
+
+// MapInterfaceCp 复制map，并且重新弄一个内存位储存
+func MapInterfaceCp(data map[string]interface{}) map[string]interface{} {
+	res := make(map[string]interface{})
+	for key, value := range data {
+		res[key] = value
+	}
 	return res
 }
 
-// RandStr 产生随机字符串
-func RandStr(length int, isInt bool) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	if isInt {
-		letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+// Ternary 伪装的三元运算
+func Ternary(condition interface{}, trueRun interface{}, falseRun interface{}) interface{} {
+	if Empty(condition) {
+		return falseRun
+	} else {
+		return trueRun
 	}
-	b := make([]rune, length)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
-
-// StrToHex 字符串转16进制
-func StrToHex(str string) string {
-	return hex.EncodeToString([]byte(str))
-}
-
-// HexToStr 16进制转字符串
-func HexToStr(hexStringData string) string {
-	hexData, _ := hex.DecodeString(hexStringData)
-	return string(hexData)
-}
-
-// ReverseString 字符串倒叙
-func ReverseString(s string) string {
-	runes := []rune(s)
-	for from, to := 0, len(runes)-1; from < to; from, to = from+1, to-1 {
-		runes[from], runes[to] = runes[to], runes[from]
-	}
-	return string(runes)
-}
-
-// Enhex 16进制转加密串（二次传输加密用）
-func Enhex(hex string) string {
-	var ValNum = [4]map[string]string{
-		map[string]string{"1": "g", "2": "h", "3": "i", "4": "j", "5": "k", "6": "l", "7": "m", "8": "n", "9": "o", "0": "p"},
-		map[string]string{"1": "g", "2": "r", "3": "s", "4": "t", "5": "u", "6": "v", "7": "w", "8": "x", "9": "y", "0": "z"},
-		map[string]string{"1": "G", "2": "H", "3": "I", "4": "J", "5": "K", "6": "L", "7": "M", "8": "N", "9": "O", "0": "P"},
-		map[string]string{"1": "Q", "2": "R", "3": "S", "4": "T", "5": "U", "6": "V", "7": "W", "8": "X", "9": "Y", "0": "Z"},
-	}
-
-	// 字符串倒序
-	hex = ReverseString(hex)
-
-	//在字符串前面加一个随机数字
-	str := strconv.Itoa(rand.Intn(9) + 1)
-
-	//随机数位转大写
-	HexS := []rune(hex)
-	for i1 := 0; i1 < len(HexS); i1++ {
-		Val := string(HexS[i1])
-
-		if (HexS[i1] >= 97 && HexS[i1] <= 122) || (HexS[i1] >= 65 && HexS[i1] <= 90) {
-			if rand.Intn(2) == 1 {
-				str = str + Val
-			} else {
-				str = str + strings.ToUpper(Val)
-			}
-		} else {
-			str = str + ValNum[rand.Intn(4)][Val]
-		}
-
-		if rand.Intn(20) < 5 {
-			str = str + strconv.Itoa(rand.Intn(8)+1)
-		}
-	}
-
-	//插入随机字母
-	str = str + RandStr(1, false)
-
-	//遵循base64规则，补充4倍位
-	for i2 := 0; i2 < (len(str) % 4); i2++ {
-		str = str + "="
-	}
-
-	return str
-}
-
-// Dehex 加密串转16进制（二次传输加密用）
-func Dehex(hex string) string {
-	var ValNum = map[string]string{
-		"g": "1", "h": "2", "i": "3", "j": "4", "k": "5", "l": "6", "m": "7", "n": "8", "o": "9", "p": "0",
-		"r": "2", "s": "3", "t": "4", "u": "5", "v": "6", "w": "7", "x": "8", "y": "9", "z": "0",
-		"G": "1", "H": "2", "I": "3", "J": "4", "K": "5", "L": "6", "M": "7", "N": "8", "O": "9", "P": "0",
-		"Q": "1", "R": "2", "S": "3", "T": "4", "U": "5", "V": "6", "W": "7", "X": "8", "Y": "9", "Z": "0",
-	}
-
-	//去除等号
-	hex = strings.Replace(hex, "=", "", -1)
-
-	//去除数字(由于首位是数字，就顺带去除了)
-	hex = regexp.MustCompile(`\d+`).ReplaceAllString(hex, "")
-
-	//去除最后一个字符
-	hex = hex[0 : len(hex)-1]
-
-	// 字符串倒序
-	hex = ReverseString(hex)
-
-	//字母转数字
-	str := ""
-	HexS := []rune(hex)
-	for i1 := 0; i1 < len(HexS); i1++ {
-		Val := string(HexS[i1])
-		if _, ok := ValNum[Val]; ok {
-			//如果存在key，就是数字演变的字母，即换回数字
-			str = str + ValNum[Val]
-		} else {
-			str = str + Val
-		}
-	}
-
-	// 字符转小写
-	str = strings.ToLower(str)
-
-	return str
 }

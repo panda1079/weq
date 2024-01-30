@@ -35,9 +35,25 @@ go run main.go
 2.Go语言官方没有实现Mysql的数据库驱动,database/sql包提供了保证SQL或类SQL数据库的泛用接口,并不提供具体的数据库驱动。需要安装Go Mysql Driver 依赖
 ```
 go get -u github.com/go-sql-driver/mysql
+go get -u github.com/go-redis/redis
 ```
  
 3.Go语言没有完善的web socker包，需要导入websocket (待完善)
 ```
 go get github.com/gorilla/websocket
 ```
+
+4. 如果国内的get不到，那就需要使用国内源
+```
+1. 七牛 CDN
+go env -w  GOPROXY=https://goproxy.cn,direct
+
+2. 阿里云
+go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+
+3. 官方
+go env -w  GOPROXY=https://goproxy.io,direct
+```
+
+1.写一个可以每分钟都在检测go程序是否运行的成勋
+2.通过crontab进行进程守护

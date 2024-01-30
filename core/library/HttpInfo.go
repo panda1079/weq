@@ -14,14 +14,16 @@ import (
 
 // HttpInfo 请求内容
 type HttpInfo struct {
-	IsCli          bool
-	Request        *http.Request
-	ResponseWriter http.ResponseWriter
-	ThisConn       *websocket.Conn // socket模式下的当前连接通道
-	Body           string
-	Mount          map[string]string
-	Form           url.Values
-	MultipartForm  *multipart.Form
+	IsCli           bool
+	Request         *http.Request
+	ResponseWriter  http.ResponseWriter
+	ThisConn        *websocket.Conn // socket模式下的当前连接通道
+	Body            string
+	Mount           map[string]string
+	Form            url.Values
+	MultipartForm   *multipart.Form
+	TransmissionMod int64       //是否启用加密模式（2为启用）
+	Encryption      *Encryption //加密模块
 }
 
 // GetHeader 获取请求头信息
@@ -83,9 +85,16 @@ func (CH *HttpInfo) RH(key string, defaultValue any) interface{} {
 	return res
 }
 
-// R 获取请求参数  key : 变量名    defaultValue : 默认值    Type:类型（string/int）
-func (CH *HttpInfo) R(key string, defaultValue any, Type string) interface{} {
+// Input 获取请求参数  key : 变量名    defaultValue : 默认值    Type:类型（string/int）
+func (CH *HttpInfo) Input(key string, defaultValue any, Type string) interface{} {
 	var res = InterfaceToString(CH.RH(key, defaultValue)) //直接获取，省事
+
+	//对于加密内容的特殊处理
+	if CH.TransmissionMod == 2 {
+		if !Empty(res) {
+			res = CH.Encryption.HexToStr(CH.Encryption.Dehex(res))
+		}
+	}
 
 	if Type == "string" {
 		var arg = html.EscapeString(strings.Trim(res, " ")) //转义html字符串
@@ -99,6 +108,9 @@ func (CH *HttpInfo) R(key string, defaultValue any, Type string) interface{} {
 	} else if Type == "int64" {
 		ins64, _ := strconv.ParseInt(res, 10, 64)
 		return ins64
+	} else if Type == "float64" {
+		float, _ := strconv.ParseFloat(res, 64)
+		return float
 	}
 
 	return defaultValue
@@ -138,7 +150,7 @@ func (CH *HttpInfo) ClientRealIP() string {
 		ip = ipSub
 	}
 
-	if In(ip[0:3], []string{"127", "172", "192"}) {
+	if In(ip[0:3], []string{"127", "172", "192", "10,"}) {
 		xri := CH.GetHeader("X-Real-IP")
 		xff := CH.GetHeader("X-Forward-For")
 

@@ -67,7 +67,7 @@ func (r *Request) GetRInfo(Rr *http.Request, routeList map[string]map[string]str
 	if value, ok := routeList[Rr.Method+"__"+route]; ok {
 		run = value
 	} else {
-		// 2.正则的需要有内容才算
+		// 2.正则需要有内容才算
 		for _, Value1 := range routeList {
 
 			var re = regexp.MustCompile(Value1["route"])
